@@ -196,9 +196,9 @@
       </div>
 
       <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('chat')">Messagerie</button>
-        <button class="tab-btn" onclick="switchTab('cards')">Cartes & Rewards</button>
-        <button class="tab-btn" onclick="switchTab('create-card')">+ Offrir</button>
+        <button class="tab-btn active" onclick="switchTab('chat', event)">Messagerie</button>
+        <button class="tab-btn" onclick="switchTab('cards', event)">Cartes & Rewards</button>
+        <button class="tab-btn" onclick="switchTab('create-card', event)">+ Offrir</button>
       </div>
 
       <!-- Tab 1: Chat -->
@@ -246,7 +246,6 @@
     const ENCRYPTION_KEY = "CleSecreteCocon2026";
     let currentUser = "";
     let partnerUser = "";
-    let isConnected = false;
 
     function handleConvert() {
       const val = document.getElementById('b12-input').value.trim().toUpperCase();
@@ -292,7 +291,6 @@
         });
         
         const presence = await res.json();
-        isConnected = true;
 
         const myPresence = presence[currentUser];
         const partnerPresence = presence[partnerUser];
@@ -309,7 +307,6 @@
         }
 
       } catch (err) {
-        // En cas d'erreur de réseau
         updateStatusDots('red', 'red', 'Erreur de connexion');
       }
     }
@@ -323,7 +320,7 @@
       document.getElementById('status-text').innerText = text;
     }
 
-    function switchTab(tabName) {
+    function switchTab(tabName, evt) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById('tab-chat').classList.add('hidden');
       document.getElementById('tab-cards').classList.add('hidden');
@@ -337,32 +334,48 @@
       } else if (tabName === 'create-card') {
         document.getElementById('tab-create-card').classList.remove('hidden');
       }
-      event.target.classList.add('active');
+
+      if (evt && evt.target) {
+        evt.target.classList.add('active');
+      }
     }
 
     async function loadMessages() {
       try {
         const res = await fetch('/.netlify/functions/messages');
+        if (!res.ok) return;
+
         const data = await res.json();
         const box = document.getElementById('chat-box');
         box.innerHTML = '';
 
         data.forEach(m => {
-          let decrypted = '';
-          try {
-            decrypted = CryptoJS.AES.decrypt(m.encrypted_text, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
-          } catch(e) { decrypted = "[Message illisible]"; }
+          let textToShow = '';
 
-          if (decrypted) {
-            const isMine = m.sender === currentUser;
-            const div = document.createElement('div');
-            div.className = `msg-bubble ${isMine ? 'msg-mine' : 'msg-partner'}`;
-            div.innerHTML = `<div class="msg-sender">${m.sender}</div>${decrypted}`;
-            box.appendChild(div);
+          // Tentative de déchiffrement AES
+          try {
+            const bytes = CryptoJS.AES.decrypt(m.encrypted_text, ENCRYPTION_KEY);
+            textToShow = bytes.toString(CryptoJS.enc.Utf8);
+          } catch (e) {
+            textToShow = '';
           }
+
+          // Affichage du texte brut si non chiffré
+          if (!textToShow) {
+            textToShow = m.encrypted_text;
+          }
+
+          const isMine = (m.sender === currentUser);
+          const div = document.createElement('div');
+          div.className = `msg-bubble ${isMine ? 'msg-mine' : 'msg-partner'}`;
+          div.innerHTML = `<div class="msg-sender">${m.sender}</div>${textToShow}`;
+          box.appendChild(div);
         });
+
         box.scrollTop = box.scrollHeight;
-      } catch (err) { console.error(err); }
+      } catch (err) {
+        console.error("Erreur chargement messages:", err);
+      }
     }
 
     async function sendMsg() {
@@ -384,11 +397,13 @@
     async function loadCards() {
       try {
         const res = await fetch('/.netlify/functions/cards');
+        if (!res.ok) return;
+
         const data = await res.json();
         const container = document.getElementById('cards-container');
         container.innerHTML = '';
 
-        if(data.length === 0) {
+        if (!data || data.length === 0) {
           container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem;">Aucune carte offerte pour le moment.</p>';
           return;
         }
@@ -409,7 +424,9 @@
           `;
           container.appendChild(el);
         });
-      } catch (err) { console.error(err); }
+      } catch (err) { 
+        console.error("Erreur chargement cartes:", err); 
+      }
     }
 
     async function createCard() {
@@ -431,7 +448,7 @@
     }
 
     async function redeemCard(id) {
-      if(!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
+      if (!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
       await fetch('/.netlify/functions/cards', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
