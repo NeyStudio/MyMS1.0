@@ -4,16 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Convertisseur Duodécimal & Mathématiques</title>
-  <!-- Google Fonts & Libraries -->
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
   <style>
     :root {
       --bg-color: #FAF6F0;
-      --card-bg: rgba(255, 255, 255, 0.85);
-      --accent: #D4A373;
-      --accent-soft: #FAEDCD;
+      --card-bg: rgba(255, 255, 255, 0.88);
       --rose: #E8A598;
       --rose-dark: #C97C6D;
       --text: #4A403A;
@@ -34,7 +31,6 @@
       padding: 20px;
       background-image: radial-gradient(#E8A598 0.5px, transparent 0.5px);
       background-size: 24px 24px;
-      background-color: #FAF6F0;
     }
 
     .container {
@@ -46,15 +42,12 @@
       width: 100%;
       max-width: 480px;
       padding: 32px;
-      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 600; }
-    h1 { font-size: 2rem; color: var(--text); text-align: center; margin-bottom: 8px; }
-    h2 { font-size: 1.6rem; color: var(--rose-dark); }
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; text-align: center; margin-bottom: 8px; }
     .subtitle { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 24px; }
 
-    input, select, textarea {
+    input, textarea {
       width: 100%;
       padding: 14px 16px;
       border: 1.5px solid #E6DCD3;
@@ -64,9 +57,8 @@
       font-family: inherit;
       font-size: 0.95rem;
       outline: none;
-      transition: border-color 0.2s;
     }
-    input:focus, select:focus, textarea:focus { border-color: var(--rose); }
+    input:focus, textarea:focus { border-color: var(--rose); }
 
     button {
       width: 100%;
@@ -78,28 +70,40 @@
       font-weight: 600;
       font-size: 0.95rem;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      box-shadow: 0 4px 12px rgba(232, 165, 152, 0.3);
+      transition: background 0.2s;
     }
     button:hover { background: var(--rose-dark); }
-    button:active { transform: scale(0.98); }
 
     .hidden { display: none !important; }
 
-    /* Conversion UI */
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px; }
-    .result-box {
-      margin-top: 20px;
-      padding: 16px;
-      background: var(--accent-soft);
+    /* Presence Bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #F2ECE4;
+      padding: 10px 16px;
       border-radius: 12px;
-      text-align: center;
-      font-size: 1.1rem;
-      color: #6B5644;
+      margin-bottom: 16px;
     }
+    .status-dots {
+      display: flex;
+      gap: 6px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #E53935; /* Rouge par défaut */
+      transition: background 0.3s;
+    }
+    .dot.orange { background: #FB8C00; }
+    .dot.green { background: #4CAF50; }
+    .dot.red { background: #E53935; }
+    
+    .status-text { font-size: 0.8rem; color: var(--text-light); font-weight: 500; }
 
-    /* Secret App UI */
+    /* Navigation */
     .nav-tabs {
       display: flex;
       gap: 8px;
@@ -113,7 +117,6 @@
       padding: 8px;
       background: transparent;
       color: var(--text-light);
-      box-shadow: none;
       font-size: 0.85rem;
     }
     .tab-btn.active { background: #FFF; color: var(--rose-dark); }
@@ -135,29 +138,12 @@
       font-size: 0.9rem;
       line-height: 1.4;
     }
-    .msg-mine {
-      align-self: flex-end;
-      background: var(--rose);
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
-    .msg-partner {
-      align-self: flex-start;
-      background: #F0EADF;
-      color: var(--text);
-      border-bottom-left-radius: 4px;
-    }
+    .msg-mine { align-self: flex-end; background: var(--rose); color: white; border-bottom-right-radius: 4px; }
+    .msg-partner { align-self: flex-start; background: #F0EADF; color: var(--text); border-bottom-left-radius: 4px; }
     .msg-sender { font-size: 0.7rem; opacity: 0.8; margin-bottom: 2px; }
 
     /* Cards UI */
-    .cards-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-height: 320px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
+    .cards-grid { display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto; }
     .card-item {
       background: #FFF;
       border: 1.5px dashed var(--rose);
@@ -166,17 +152,11 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      position: relative;
     }
-    .card-item.redeemed {
-      opacity: 0.5;
-      border-style: solid;
-      border-color: #DDD;
-      background: #FAF8F5;
-    }
+    .card-item.redeemed { opacity: 0.5; border-style: solid; border-color: #DDD; background: #FAF8F5; }
     .card-icon { font-size: 1.8rem; }
     .card-info { flex: 1; }
-    .card-title { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+    .card-title { font-weight: 600; font-size: 0.95rem; }
     .card-desc { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
     .card-action { width: auto; padding: 6px 12px; font-size: 0.75rem; }
   </style>
@@ -185,34 +165,34 @@
 
   <div class="container">
     
-    <!-- INTERFACE PUBLIQUE (Convertisseur Base 12 -> Base 10) -->
+    <!-- CONVERTISSEUR (Interface Publique) -->
     <div id="public-app">
       <h1>Convertisseur Duodécimal</h1>
-      <p class="subtitle">Convertissez facilement vos valeurs de la base 12 à la base 10.</p>
+      <p class="subtitle">Convertissez vos valeurs de la base 12 à la base 10.</p>
       
-      <div class="form-group">
-        <label for="b12-input">Nombre en Base 12 (Utilisez A pour 10 et B pour 11)</label>
+      <div style="margin-bottom: 16px;">
+        <label style="font-size: 0.85rem; color: var(--text-light); display:block; margin-bottom:6px;">Nombre en Base 12</label>
         <input type="text" id="b12-input" placeholder="Ex: 2B4, 1A..." autocomplete="off">
       </div>
       <button onclick="handleConvert()">Convertir</button>
       
-      <div class="result-box">
+      <div style="margin-top: 20px; padding: 16px; background: #FAEDCD; border-radius: 12px; text-align: center; color: #6B5644;">
         Résultat en Base 10 : <strong id="b10-output">-</strong>
       </div>
     </div>
 
-    <!-- INTERFACE CACHÉE (Notre Cocon) -->
+    <!-- NOTRE COCON (Interface Sécurisée) -->
     <div id="secret-app" class="hidden">
-      <h1>Notre Cocon 💖</h1>
-      <p class="subtitle">Espace privé & doux pour nous deux</p>
+      <h1 id="welcome-title">Notre Cocon 💖</h1>
+      <p class="subtitle" id="welcome-subtitle"></p>
 
-      <!-- Choix de l'utilisateur -->
-      <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
-        <span style="font-size: 0.8rem; color: var(--text-light);">Je suis :</span>
-        <select id="user-selector" style="padding: 6px; width: auto; font-size: 0.85rem;" onchange="saveUser()">
-          <option value="Partenaire 1">Moi</option>
-          <option value="Partenaire 2">Mon/Ma Chéri(e)</option>
-        </select>
+      <!-- Indicateur de Statut Réseau -->
+      <div class="status-bar">
+        <span class="status-text" id="status-text">Mise en connexion...</span>
+        <div class="status-dots">
+          <div class="dot" id="dot-me"></div>
+          <div class="dot" id="dot-partner"></div>
+        </div>
       </div>
 
       <div class="nav-tabs">
@@ -221,7 +201,7 @@
         <button class="tab-btn" onclick="switchTab('create-card')">+ Offrir</button>
       </div>
 
-      <!-- Tab 1: Messagerie -->
+      <!-- Tab 1: Chat -->
       <div id="tab-chat">
         <div id="chat-box"></div>
         <div style="display: flex; gap: 8px;">
@@ -230,24 +210,24 @@
         </div>
       </div>
 
-      <!-- Tab 2: Vos Cartes Cadeaux -->
+      <!-- Tab 2: Cartes -->
       <div id="tab-cards" class="hidden">
         <div class="cards-grid" id="cards-container"></div>
       </div>
 
-      <!-- Tab 3: Offrir une Carte -->
+      <!-- Tab 3: Offrir -->
       <div id="tab-create-card" class="hidden">
-        <div class="form-group">
-          <label>Icône / Emoji</label>
-          <input type="text" id="card-icon" placeholder="Ex: 💆‍♂️, 🥐, 🎬, 🥂" value="🌹">
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 0.8rem; color: var(--text-light);">Icône / Emoji</label>
+          <input type="text" id="card-icon" value="🌹">
         </div>
-        <div class="form-group">
-          <label>Titre de la carte</label>
-          <input type="text" id="card-title" placeholder="Ex: Massage du dos 20min">
+        <div style="margin-bottom: 12px;">
+          <label style="font-size: 0.8rem; color: var(--text-light);">Titre de la carte</label>
+          <input type="text" id="card-title" placeholder="Ex: Soirée restaurant au choix">
         </div>
-        <div class="form-group">
-          <label>Petite précision (optionnel)</label>
-          <textarea id="card-desc" rows="2" placeholder="Valable ce week-end..."></textarea>
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 0.8rem; color: var(--text-light);">Précision (optionnel)</label>
+          <textarea id="card-desc" rows="2" placeholder="Quand tu le souhaites..."></textarea>
         </div>
         <button onclick="createCard()">Offrir cette carte 💌</button>
       </div>
@@ -257,26 +237,24 @@
   </div>
 
   <script>
-    // --- CONFIGURATION DE VOTRE CODE SECRET ET CLÉ ---
-    const TRIGGER_CODE = "LOVE12"; // Tapez ceci dans le convertisseur pour déverrouiller
-    const ENCRYPTION_KEY = "VotreCleSuperSecreteEtRomantique2026"; // Sert au chiffrement AES
+    // Configuration des mots de passe
+    const PASSWORDS = {
+      "ERIC12": "Eric",
+      "OLGA12": "Olga"
+    };
 
-    let currentUser = localStorage.getItem('cocon_user') || 'Partenaire 1';
-    document.getElementById('user-selector').value = currentUser;
+    const ENCRYPTION_KEY = "CleSecreteCocon2026";
+    let currentUser = "";
+    let partnerUser = "";
+    let isConnected = false;
 
-    function saveUser() {
-      currentUser = document.getElementById('user-selector').value;
-      localStorage.setItem('cocon_user', currentUser);
-      loadMessages();
-      loadCards();
-    }
-
-    // --- LOGIQUE CONVERTISSEUR / DEVERROUILLAGE ---
     function handleConvert() {
-      const val = document.getElementById('b12-input').value.trim();
+      const val = document.getElementById('b12-input').value.trim().toUpperCase();
       
-      if (val === TRIGGER_CODE) {
-        unlockSecretApp();
+      if (PASSWORDS[val]) {
+        currentUser = PASSWORDS[val];
+        partnerUser = currentUser === "Eric" ? "Olga" : "Eric";
+        unlockApp();
         return;
       }
 
@@ -284,16 +262,65 @@
       document.getElementById('b10-output').innerText = isNaN(parsed) ? "Valeur invalide" : parsed.toString(10);
     }
 
-    function unlockSecretApp() {
+    function unlockApp() {
       document.getElementById('public-app').classList.add('hidden');
       document.getElementById('secret-app').classList.remove('hidden');
+
+      // Personnalisation de la page selon l'utilisateur
+      document.getElementById('welcome-title').innerText = `Coucou ${currentUser} 💖`;
+      document.getElementById('welcome-subtitle').innerText = `Espace privé partagé avec ${partnerUser}`;
+
+      // Statut initial : En cours de connexion (Orange / Rouge)
+      updateStatusDots('orange', 'red', 'Connexion en cours...');
+
+      // Lancer la mise à jour de présence et des données
+      syncPresence();
       loadMessages();
       loadCards();
-      // Rafraîchissement automatique toutes les 5s
-      setInterval(() => {
-        loadMessages();
-        loadCards();
-      }, 5000);
+
+      setInterval(syncPresence, 5000);
+      setInterval(loadMessages, 4000);
+      setInterval(loadCards, 6000);
+    }
+
+    async function syncPresence() {
+      try {
+        const res = await fetch('/.netlify/functions/presence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: currentUser })
+        });
+        
+        const presence = await res.json();
+        isConnected = true;
+
+        const myPresence = presence[currentUser];
+        const partnerPresence = presence[partnerUser];
+
+        if (myPresence && partnerPresence) {
+          // 2 Verts : Tous les deux connectés
+          updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
+        } else if (myPresence && !partnerPresence) {
+          // 1 Vert, 1 Rouge : Moi connecté, partenaire non
+          updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
+        } else {
+          // 2 Rouges : Non connecté
+          updateStatusDots('red', 'red', 'Déconnecté');
+        }
+
+      } catch (err) {
+        // En cas d'erreur de réseau
+        updateStatusDots('red', 'red', 'Erreur de connexion');
+      }
+    }
+
+    function updateStatusDots(dot1Color, dot2Color, text) {
+      const dotMe = document.getElementById('dot-me');
+      const dotPartner = document.getElementById('dot-partner');
+      
+      dotMe.className = `dot ${dot1Color}`;
+      dotPartner.className = `dot ${dot2Color}`;
+      document.getElementById('status-text').innerText = text;
     }
 
     function switchTab(tabName) {
@@ -304,18 +331,15 @@
 
       if (tabName === 'chat') {
         document.getElementById('tab-chat').classList.remove('hidden');
-        event.target.classList.add('active');
       } else if (tabName === 'cards') {
         document.getElementById('tab-cards').classList.remove('hidden');
-        event.target.classList.add('active');
         loadCards();
       } else if (tabName === 'create-card') {
         document.getElementById('tab-create-card').classList.remove('hidden');
-        event.target.classList.add('active');
       }
+      event.target.classList.add('active');
     }
 
-    // --- LOGIQUE CHAT ---
     async function loadMessages() {
       try {
         const res = await fetch('/.netlify/functions/messages');
@@ -357,7 +381,6 @@
       loadMessages();
     }
 
-    // --- LOGIQUE CARTES & RECOMPENSES ---
     async function loadCards() {
       try {
         const res = await fetch('/.netlify/functions/cards');
@@ -396,12 +419,10 @@
 
       if (!title) return alert("Veuillez entrer un titre pour la carte");
 
-      const recipient = currentUser === 'Partenaire 1' ? 'Partenaire 2' : 'Partenaire 1';
-
       await fetch('/.netlify/functions/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, icon, sender: currentUser, recipient })
+        body: JSON.stringify({ title, description, icon, sender: currentUser, recipient: partnerUser })
       });
 
       document.getElementById('card-title').value = '';
@@ -410,7 +431,7 @@
     }
 
     async function redeemCard(id) {
-      if(!confirm("Veux-tu vraiment échanger / utiliser cette carte maintenant ? 🥰")) return;
+      if(!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
       await fetch('/.netlify/functions/cards', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
