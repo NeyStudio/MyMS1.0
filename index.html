@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Convertisseur Duodécimal & Mathématiques</title>
+  <!-- Google Fonts & Libraries -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #FAF6F0;
+      --card-bg: rgba(255, 255, 255, 0.85);
+      --accent: #D4A373;
+      --accent-soft: #FAEDCD;
+      --rose: #E8A598;
+      --rose-dark: #C97C6D;
+      --text: #4A403A;
+      --text-light: #8C7A6B;
+      --shadow: 0 10px 30px rgba(180, 150, 130, 0.12);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg-color);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background-image: radial-gradient(#E8A598 0.5px, transparent 0.5px);
+      background-size: 24px 24px;
+      background-color: #FAF6F0;
+    }
+
+    .container {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      box-shadow: var(--shadow);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 480px;
+      padding: 32px;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    h1, h2, h3 { font-family: 'Cormorant Garamond', serif; font-weight: 600; }
+    h1 { font-size: 2rem; color: var(--text); text-align: center; margin-bottom: 8px; }
+    h2 { font-size: 1.6rem; color: var(--rose-dark); }
+    .subtitle { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 24px; }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid #E6DCD3;
+      border-radius: 12px;
+      background: #FFF;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--rose); }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--rose);
+      color: white;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 4px 12px rgba(232, 165, 152, 0.3);
+    }
+    button:hover { background: var(--rose-dark); }
+    button:active { transform: scale(0.98); }
+
+    .hidden { display: none !important; }
+
+    /* Conversion UI */
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; color: var(--text-light); margin-bottom: 6px; }
+    .result-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--accent-soft);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1.1rem;
+      color: #6B5644;
+    }
+
+    /* Secret App UI */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: #F0E8DF;
+      padding: 4px;
+      border-radius: 12px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 8px;
+      background: transparent;
+      color: var(--text-light);
+      box-shadow: none;
+      font-size: 0.85rem;
+    }
+    .tab-btn.active { background: #FFF; color: var(--rose-dark); }
+
+    /* Chat UI */
+    #chat-box {
+      height: 280px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-right: 4px;
+      margin-bottom: 12px;
+    }
+    .msg-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 16px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .msg-mine {
+      align-self: flex-end;
+      background: var(--rose);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .msg-partner {
+      align-self: flex-start;
+      background: #F0EADF;
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+    }
+    .msg-sender { font-size: 0.7rem; opacity: 0.8; margin-bottom: 2px; }
+
+    /* Cards UI */
+    .cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .card-item {
+      background: #FFF;
+      border: 1.5px dashed var(--rose);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+    .card-item.redeemed {
+      opacity: 0.5;
+      border-style: solid;
+      border-color: #DDD;
+      background: #FAF8F5;
+    }
+    .card-icon { font-size: 1.8rem; }
+    .card-info { flex: 1; }
+    .card-title { font-weight: 600; font-size: 0.95rem; color: var(--text); }
+    .card-desc { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+    .card-action { width: auto; padding: 6px 12px; font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- INTERFACE PUBLIQUE (Convertisseur Base 12 -> Base 10) -->
+    <div id="public-app">
+      <h1>Convertisseur Duodécimal</h1>
+      <p class="subtitle">Convertissez facilement vos valeurs de la base 12 à la base 10.</p>
+      
+      <div class="form-group">
+        <label for="b12-input">Nombre en Base 12 (Utilisez A pour 10 et B pour 11)</label>
+        <input type="text" id="b12-input" placeholder="Ex: 2B4, 1A..." autocomplete="off">
+      </div>
+      <button onclick="handleConvert()">Convertir</button>
+      
+      <div class="result-box">
+        Résultat en Base 10 : <strong id="b10-output">-</strong>
+      </div>
+    </div>
+
+    <!-- INTERFACE CACHÉE (Notre Cocon) -->
+    <div id="secret-app" class="hidden">
+      <h1>Notre Cocon 💖</h1>
+      <p class="subtitle">Espace privé & doux pour nous deux</p>
+
+      <!-- Choix de l'utilisateur -->
+      <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
+        <span style="font-size: 0.8rem; color: var(--text-light);">Je suis :</span>
+        <select id="user-selector" style="padding: 6px; width: auto; font-size: 0.85rem;" onchange="saveUser()">
+          <option value="Partenaire 1">Moi</option>
+          <option value="Partenaire 2">Mon/Ma Chéri(e)</option>
+        </select>
+      </div>
+
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('chat')">Messagerie</button>
+        <button class="tab-btn" onclick="switchTab('cards')">Cartes & Rewards</button>
+        <button class="tab-btn" onclick="switchTab('create-card')">+ Offrir</button>
+      </div>
+
+      <!-- Tab 1: Messagerie -->
+      <div id="tab-chat">
+        <div id="chat-box"></div>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="chat-msg" placeholder="Ton doux message..." onkeypress="if(event.key==='Enter') sendMsg()">
+          <button style="width: 80px;" onclick="sendMsg()">Envoyer</button>
+        </div>
+      </div>
+
+      <!-- Tab 2: Vos Cartes Cadeaux -->
+      <div id="tab-cards" class="hidden">
+        <div class="cards-grid" id="cards-container"></div>
+      </div>
+
+      <!-- Tab 3: Offrir une Carte -->
+      <div id="tab-create-card" class="hidden">
+        <div class="form-group">
+          <label>Icône / Emoji</label>
+          <input type="text" id="card-icon" placeholder="Ex: 💆‍♂️, 🥐, 🎬, 🥂" value="🌹">
+        </div>
+        <div class="form-group">
+          <label>Titre de la carte</label>
+          <input type="text" id="card-title" placeholder="Ex: Massage du dos 20min">
+        </div>
+        <div class="form-group">
+          <label>Petite précision (optionnel)</label>
+          <textarea id="card-desc" rows="2" placeholder="Valable ce week-end..."></textarea>
+        </div>
+        <button onclick="createCard()">Offrir cette carte 💌</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // --- CONFIGURATION DE VOTRE CODE SECRET ET CLÉ ---
+    const TRIGGER_CODE = "LOVE12"; // Tapez ceci dans le convertisseur pour déverrouiller
+    const ENCRYPTION_KEY = "VotreCleSuperSecreteEtRomantique2026"; // Sert au chiffrement AES
+
+    let currentUser = localStorage.getItem('cocon_user') || 'Partenaire 1';
+    document.getElementById('user-selector').value = currentUser;
+
+    function saveUser() {
+      currentUser = document.getElementById('user-selector').value;
+      localStorage.setItem('cocon_user', currentUser);
+      loadMessages();
+      loadCards();
+    }
+
+    // --- LOGIQUE CONVERTISSEUR / DEVERROUILLAGE ---
+    function handleConvert() {
+      const val = document.getElementById('b12-input').value.trim();
+      
+      if (val === TRIGGER_CODE) {
+        unlockSecretApp();
+        return;
+      }
+
+      const parsed = parseInt(val, 12);
+      document.getElementById('b10-output').innerText = isNaN(parsed) ? "Valeur invalide" : parsed.toString(10);
+    }
+
+    function unlockSecretApp() {
+      document.getElementById('public-app').classList.add('hidden');
+      document.getElementById('secret-app').classList.remove('hidden');
+      loadMessages();
+      loadCards();
+      // Rafraîchissement automatique toutes les 5s
+      setInterval(() => {
+        loadMessages();
+        loadCards();
+      }, 5000);
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-chat').classList.add('hidden');
+      document.getElementById('tab-cards').classList.add('hidden');
+      document.getElementById('tab-create-card').classList.add('hidden');
+
+      if (tabName === 'chat') {
+        document.getElementById('tab-chat').classList.remove('hidden');
+        event.target.classList.add('active');
+      } else if (tabName === 'cards') {
+        document.getElementById('tab-cards').classList.remove('hidden');
+        event.target.classList.add('active');
+        loadCards();
+      } else if (tabName === 'create-card') {
+        document.getElementById('tab-create-card').classList.remove('hidden');
+        event.target.classList.add('active');
+      }
+    }
+
+    // --- LOGIQUE CHAT ---
+    async function loadMessages() {
+      try {
+        const res = await fetch('/.netlify/functions/messages');
+        const data = await res.json();
+        const box = document.getElementById('chat-box');
+        box.innerHTML = '';
+
+        data.forEach(m => {
+          let decrypted = '';
+          try {
+            decrypted = CryptoJS.AES.decrypt(m.encrypted_text, ENCRYPTION_KEY).toString(CryptoJS.enc.Utf8);
+          } catch(e) { decrypted = "[Message illisible]"; }
+
+          if (decrypted) {
+            const isMine = m.sender === currentUser;
+            const div = document.createElement('div');
+            div.className = `msg-bubble ${isMine ? 'msg-mine' : 'msg-partner'}`;
+            div.innerHTML = `<div class="msg-sender">${m.sender}</div>${decrypted}`;
+            box.appendChild(div);
+          }
+        });
+        box.scrollTop = box.scrollHeight;
+      } catch (err) { console.error(err); }
+    }
+
+    async function sendMsg() {
+      const input = document.getElementById('chat-msg');
+      if (!input.value.trim()) return;
+
+      const encrypted = CryptoJS.AES.encrypt(input.value.trim(), ENCRYPTION_KEY).toString();
+      
+      await fetch('/.netlify/functions/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sender: currentUser, encrypted_text: encrypted })
+      });
+
+      input.value = '';
+      loadMessages();
+    }
+
+    // --- LOGIQUE CARTES & RECOMPENSES ---
+    async function loadCards() {
+      try {
+        const res = await fetch('/.netlify/functions/cards');
+        const data = await res.json();
+        const container = document.getElementById('cards-container');
+        container.innerHTML = '';
+
+        if(data.length === 0) {
+          container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem;">Aucune carte offerte pour le moment.</p>';
+          return;
+        }
+
+        data.forEach(c => {
+          const isForMe = c.recipient === currentUser;
+          const el = document.createElement('div');
+          el.className = `card-item ${c.is_redeemed ? 'redeemed' : ''}`;
+          el.innerHTML = `
+            <div class="card-icon">${c.icon}</div>
+            <div class="card-info">
+              <div class="card-title">${c.title}</div>
+              <div class="card-desc">${c.description || ''}</div>
+              <div style="font-size:0.7rem; color:var(--text-light); margin-top:4px;">De ${c.sender} pour ${c.recipient}</div>
+            </div>
+            ${!c.is_redeemed && isForMe ? `<button class="card-action" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
+            ${c.is_redeemed ? `<span style="font-size:0.75rem; color:#888;">Utilisée ❤️</span>` : ''}
+          `;
+          container.appendChild(el);
+        });
+      } catch (err) { console.error(err); }
+    }
+
+    async function createCard() {
+      const icon = document.getElementById('card-icon').value.trim() || '🌹';
+      const title = document.getElementById('card-title').value.trim();
+      const description = document.getElementById('card-desc').value.trim();
+
+      if (!title) return alert("Veuillez entrer un titre pour la carte");
+
+      const recipient = currentUser === 'Partenaire 1' ? 'Partenaire 2' : 'Partenaire 1';
+
+      await fetch('/.netlify/functions/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, icon, sender: currentUser, recipient })
+      });
+
+      document.getElementById('card-title').value = '';
+      document.getElementById('card-desc').value = '';
+      switchTab('cards');
+    }
+
+    async function redeemCard(id) {
+      if(!confirm("Veux-tu vraiment échanger / utiliser cette carte maintenant ? 🥰")) return;
+      await fetch('/.netlify/functions/cards', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      loadCards();
+    }
+  </script>
+</body>
+</html>
