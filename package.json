@@ -1,0 +1,10 @@
+{
+  "name": "base12-romantic-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'No build step required'"
+  },
+  "dependencies": {
+    "pg": "^8.11.3"
+  }
+}
