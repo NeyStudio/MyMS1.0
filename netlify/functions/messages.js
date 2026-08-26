@@ -1,7 +1,6 @@
 const { Client } = require('pg');
 
 exports.handler = async (event) => {
-  // En-têtes pour éviter tout blocage CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -21,9 +20,11 @@ exports.handler = async (event) => {
   try {
     await client.connect();
 
+    // 1. RÉCUPÉRATION DES MESSAGES
     if (event.httpMethod === 'GET') {
-      const res = await client.query('SELECT * FROM messages ORDER BY created_at ASC LIMIT 100');
+      const res = await client.query('SELECT * FROM messages ORDER BY created_at ASC LIMIT 200');
       await client.end();
+
       return {
         statusCode: 200,
         headers,
@@ -31,13 +32,25 @@ exports.handler = async (event) => {
       };
     } 
 
+    // 2. ENVOI D'UN NOUVEAU MESSAGE
     if (event.httpMethod === 'POST') {
       const { sender, encrypted_text } = JSON.parse(event.body || '{}');
+
+      if (!sender || !encrypted_text) {
+        await client.end();
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ error: 'Champs manquants' })
+        };
+      }
+
       const res = await client.query(
         'INSERT INTO messages (sender, encrypted_text) VALUES ($1, $2) RETURNING *',
         [sender, encrypted_text]
       );
       await client.end();
+
       return {
         statusCode: 201,
         headers,
@@ -46,7 +59,8 @@ exports.handler = async (event) => {
     }
 
     await client.end();
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Méthode non autorisée' }) };
+
   } catch (err) {
     if (client) await client.end();
     return {
