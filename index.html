@@ -135,7 +135,7 @@
       <h1 id="welcome-title">Notre Cocon 💖</h1>
       <p class="subtitle" id="welcome-subtitle"></p>
 
-      <!-- Présence inchangée -->
+      <!-- Présence -->
       <div class="status-bar">
         <span class="status-text" id="status-text">Mise en connexion...</span>
         <div class="status-dots">
@@ -150,7 +150,7 @@
         <button class="tab-btn" onclick="switchTab('create-card', event)">+ Offrir</button>
       </div>
 
-      <!-- SECTION MESSAGERIE MISE À JOUR -->
+      <!-- Messagerie -->
       <div id="tab-chat">
         <div id="chat-box"></div>
         <div style="display: flex; gap: 8px;">
@@ -159,7 +159,7 @@
         </div>
       </div>
 
-      <!-- Cartes & Cadeaux inchangés -->
+      <!-- Cartes & Cadeaux -->
       <div id="tab-cards" class="hidden">
         <div class="cards-grid" id="cards-container"></div>
       </div>
@@ -187,8 +187,8 @@
     const PASSWORDS = { "ERIC12": "Eric", "OLGA12": "Olga" };
     const ENCRYPTION_KEY = "CleSecreteCocon2026";
     
-    // URL exacte de ton service Railway (remplace avec ton domaine Railway)
-    const SOCKET_SERVER_URL = "https://ms-production-xxxx.up.railway.app"; 
+    // URL directe vers le service SC actif sur Railway
+    const SOCKET_SERVER_URL = "https://sc-production-6d0a.up.railway.app"; 
 
     let currentUser = "";
     let partnerUser = "";
@@ -213,27 +213,38 @@
       document.getElementById('welcome-title').innerText = `Coucou ${currentUser} 💖`;
       document.getElementById('welcome-subtitle').innerText = `Espace privé partagé avec ${partnerUser}`;
 
-      // Conserve les fonctions de présence et de cartes existantes
       updateStatusDots('orange', 'red', 'Connexion en cours...');
-      syncPresence();
+      
+      // Connexion directe à SC via Socket.io
+      initSocket();
+      
+      // Chargement des cartes cadeaux (Netlify)
       loadCards();
-
-      setInterval(syncPresence, 5000);
       setInterval(loadCards, 6000);
-
-      // Initialisation spécifique à la messagerie temps réel
-      initSocketChat();
     }
 
-    // --- GESTION DE LA MESSAGERIE VIA SOCKET.IO ---
-    function initSocketChat() {
+    function initSocket() {
       socket = io(SOCKET_SERVER_URL);
 
       socket.on('connect', () => {
         socket.emit('user joined', currentUser);
       });
 
-      // Réception de l'historique complet
+      // Gestion des voyants de présence via Socket.io (service SC)
+      socket.on('online users', (onlineUsers) => {
+        const myPresence = onlineUsers.includes(currentUser);
+        const partnerPresence = onlineUsers.includes(partnerUser);
+
+        if (myPresence && partnerPresence) {
+          updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
+        } else if (myPresence && !partnerPresence) {
+          updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
+        } else {
+          updateStatusDots('red', 'red', 'Déconnecté');
+        }
+      });
+
+      // Chargement de l'historique complet
       socket.on('history', (messages) => {
         const box = document.getElementById('chat-box');
         box.innerHTML = '';
@@ -241,7 +252,7 @@
         box.scrollTop = box.scrollHeight;
       });
 
-      // Réception d'un nouveau message en temps réel
+      // Réception de chaque nouveau message
       socket.on('chat message', (msg) => {
         renderMessage(msg);
         const box = document.getElementById('chat-box');
@@ -275,37 +286,13 @@
       input.value = '';
     }
 
-    // --- PRÉSENCE (INCHANGÉE) ---
-    async function syncPresence() {
-      try {
-        const res = await fetch('/.netlify/functions/presence', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: currentUser })
-        });
-        const presence = await res.json();
-        const myPresence = presence[currentUser];
-        const partnerPresence = presence[partnerUser];
-
-        if (myPresence && partnerPresence) {
-          updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
-        } else if (myPresence && !partnerPresence) {
-          updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
-        } else {
-          updateStatusDots('red', 'red', 'Déconnecté');
-        }
-      } catch (err) {
-        updateStatusDots('red', 'red', 'Erreur de connexion');
-      }
-    }
-
     function updateStatusDots(dot1Color, dot2Color, text) {
       document.getElementById('dot-me').className = `dot ${dot1Color}`;
       document.getElementById('dot-partner').className = `dot ${dot2Color}`;
       document.getElementById('status-text').innerText = text;
     }
 
-    // --- CARTES & CADEAUX (INCHANGÉS) ---
+    // --- CARTES & CADEAUX ---
     async function loadCards() {
       try {
         const res = await fetch('/.netlify/functions/cards');
