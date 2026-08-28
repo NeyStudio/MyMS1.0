@@ -6,6 +6,7 @@
   <title>Convertisseur Duodécimal & Mathématiques</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <style>
     :root {
@@ -58,7 +59,6 @@
       font-size: 0.95rem;
       outline: none;
     }
-    input:focus, textarea:focus { border-color: var(--rose); }
 
     button {
       width: 100%;
@@ -70,7 +70,6 @@
       font-weight: 600;
       font-size: 0.95rem;
       cursor: pointer;
-      transition: background 0.2s;
     }
     button:hover { background: var(--rose-dark); }
 
@@ -86,109 +85,58 @@
       border-radius: 12px;
       margin-bottom: 16px;
     }
-    .status-dots {
-      display: flex;
-      gap: 6px;
-    }
-    .dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #E53935; /* Rouge par défaut */
-      transition: background 0.3s;
-    }
+    .status-dots { display: flex; gap: 6px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; background: #E53935; transition: background 0.3s; }
     .dot.orange { background: #FB8C00; }
     .dot.green { background: #4CAF50; }
     .dot.red { background: #E53935; }
-    
     .status-text { font-size: 0.8rem; color: var(--text-light); font-weight: 500; }
 
-    /* Navigation */
-    .nav-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      background: #F0E8DF;
-      padding: 4px;
-      border-radius: 12px;
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 8px;
-      background: transparent;
-      color: var(--text-light);
-      font-size: 0.85rem;
-    }
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; background: #F0E8DF; padding: 4px; border-radius: 12px; }
+    .tab-btn { flex: 1; padding: 8px; background: transparent; color: var(--text-light); font-size: 0.85rem; }
     .tab-btn.active { background: #FFF; color: var(--rose-dark); }
 
-    /* Chat UI */
-    #chat-box {
-      height: 280px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding-right: 4px;
-      margin-bottom: 12px;
-    }
-    .msg-bubble {
-      max-width: 80%;
-      padding: 10px 14px;
-      border-radius: 16px;
-      font-size: 0.9rem;
-      line-height: 1.4;
-    }
+    /* Chat */
+    #chat-box { height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+    .msg-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 0.9rem; }
     .msg-mine { align-self: flex-end; background: var(--rose); color: white; border-bottom-right-radius: 4px; }
     .msg-partner { align-self: flex-start; background: #F0EADF; color: var(--text); border-bottom-left-radius: 4px; }
     .msg-sender { font-size: 0.7rem; opacity: 0.8; margin-bottom: 2px; }
 
-    /* Cards UI */
+    /* Cards */
     .cards-grid { display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto; }
-    .card-item {
-      background: #FFF;
-      border: 1.5px dashed var(--rose);
-      border-radius: 14px;
-      padding: 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .card-item { background: #FFF; border: 1.5px dashed var(--rose); border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; }
     .card-item.redeemed { opacity: 0.5; border-style: solid; border-color: #DDD; background: #FAF8F5; }
     .card-icon { font-size: 1.8rem; }
     .card-info { flex: 1; }
     .card-title { font-weight: 600; font-size: 0.95rem; }
-    .card-desc { font-size: 0.8rem; color: var(--text-light); margin-top: 2px; }
+    .card-desc { font-size: 0.8rem; color: var(--text-light); }
     .card-action { width: auto; padding: 6px 12px; font-size: 0.75rem; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    
-    <!-- CONVERTISSEUR (Interface Publique) -->
+    <!-- CONVERTISSEUR -->
     <div id="public-app">
       <h1>Convertisseur Duodécimal</h1>
       <p class="subtitle">Convertissez vos valeurs de la base 12 à la base 10.</p>
-      
       <div style="margin-bottom: 16px;">
-        <label style="font-size: 0.85rem; color: var(--text-light); display:block; margin-bottom:6px;">Nombre en Base 12</label>
         <input type="text" id="b12-input" placeholder="Ex: 2B4, 1A..." autocomplete="off">
       </div>
       <button onclick="handleConvert()">Convertir</button>
-      
-      <div style="margin-top: 20px; padding: 16px; background: #FAEDCD; border-radius: 12px; text-align: center; color: #6B5644;">
+      <div style="margin-top: 20px; padding: 16px; background: #FAEDCD; border-radius: 12px; text-align: center;">
         Résultat en Base 10 : <strong id="b10-output">-</strong>
       </div>
     </div>
 
-    <!-- NOTRE COCON (Interface Sécurisée) -->
+    <!-- NOTRE COCON -->
     <div id="secret-app" class="hidden">
       <h1 id="welcome-title">Notre Cocon 💖</h1>
       <p class="subtitle" id="welcome-subtitle"></p>
 
-      <!-- Indicateur de Statut Réseau -->
       <div class="status-bar">
-        <span class="status-text" id="status-text">Mise en connexion...</span>
+        <span class="status-text" id="status-text">Connexion...</span>
         <div class="status-dots">
           <div class="dot" id="dot-me"></div>
           <div class="dot" id="dot-partner"></div>
@@ -201,7 +149,7 @@
         <button class="tab-btn" onclick="switchTab('create-card', event)">+ Offrir</button>
       </div>
 
-      <!-- Tab 1: Chat -->
+      <!-- Chat -->
       <div id="tab-chat">
         <div id="chat-box"></div>
         <div style="display: flex; gap: 8px;">
@@ -210,53 +158,40 @@
         </div>
       </div>
 
-      <!-- Tab 2: Cartes -->
+      <!-- Cartes -->
       <div id="tab-cards" class="hidden">
         <div class="cards-grid" id="cards-container"></div>
       </div>
 
-      <!-- Tab 3: Offrir -->
+      <!-- Créer Carte -->
       <div id="tab-create-card" class="hidden">
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 0.8rem; color: var(--text-light);">Icône / Emoji</label>
-          <input type="text" id="card-icon" value="🌹">
-        </div>
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 0.8rem; color: var(--text-light);">Titre de la carte</label>
-          <input type="text" id="card-title" placeholder="Ex: Soirée restaurant au choix">
-        </div>
-        <div style="margin-bottom: 16px;">
-          <label style="font-size: 0.8rem; color: var(--text-light);">Précision (optionnel)</label>
-          <textarea id="card-desc" rows="2" placeholder="Quand tu le souhaites..."></textarea>
-        </div>
+        <input type="text" id="card-icon" value="🌹" style="margin-bottom: 8px;">
+        <input type="text" id="card-title" placeholder="Titre de la carte" style="margin-bottom: 8px;">
+        <textarea id="card-desc" rows="2" placeholder="Précision..." style="margin-bottom: 12px;"></textarea>
         <button onclick="createCard()">Offrir cette carte 💌</button>
       </div>
-
     </div>
-
   </div>
 
   <script>
-    // Configuration des mots de passe
-    const PASSWORDS = {
-      "ERIC12": "Eric",
-      "OLGA12": "Olga"
-    };
-
+    const PASSWORDS = { "ERIC12": "Eric", "OLGA12": "Olga" };
     const ENCRYPTION_KEY = "CleSecreteCocon2026";
+    // Remplace par l'URL exacte de ton backend Railway
+    const SOCKET_SERVER_URL = window.location.origin; 
+
     let currentUser = "";
     let partnerUser = "";
+    let socket = null;
+    let allCards = [];
 
     function handleConvert() {
       const val = document.getElementById('b12-input').value.trim().toUpperCase();
-      
       if (PASSWORDS[val]) {
         currentUser = PASSWORDS[val];
         partnerUser = currentUser === "Eric" ? "Olga" : "Eric";
         unlockApp();
         return;
       }
-
       const parsed = parseInt(val, 12);
       document.getElementById('b10-output').innerText = isNaN(parsed) ? "Valeur invalide" : parsed.toString(10);
     }
@@ -264,59 +199,141 @@
     function unlockApp() {
       document.getElementById('public-app').classList.add('hidden');
       document.getElementById('secret-app').classList.remove('hidden');
-
-      // Personnalisation de la page selon l'utilisateur
       document.getElementById('welcome-title').innerText = `Coucou ${currentUser} 💖`;
       document.getElementById('welcome-subtitle').innerText = `Espace privé partagé avec ${partnerUser}`;
 
-      // Statut initial : En cours de connexion (Orange / Rouge)
-      updateStatusDots('orange', 'red', 'Connexion en cours...');
-
-      // Lancer la mise à jour de présence et des données
-      syncPresence();
-      loadMessages();
-      loadCards();
-
-      setInterval(syncPresence, 5000);
-      setInterval(loadMessages, 4000);
-      setInterval(loadCards, 6000);
+      initSocket();
     }
 
-    async function syncPresence() {
-      try {
-        const res = await fetch('/.netlify/functions/presence', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: currentUser })
-        });
-        
-        const presence = await res.json();
+    function initSocket() {
+      socket = io(SOCKET_SERVER_URL);
 
-        const myPresence = presence[currentUser];
-        const partnerPresence = presence[partnerUser];
+      socket.on('connect', () => {
+        socket.emit('user joined', currentUser);
+      });
+
+      // Présence
+      socket.on('online users', (onlineUsers) => {
+        const myPresence = onlineUsers.includes(currentUser);
+        const partnerPresence = onlineUsers.includes(partnerUser);
 
         if (myPresence && partnerPresence) {
-          // 2 Verts : Tous les deux connectés
           updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
-        } else if (myPresence && !partnerPresence) {
-          // 1 Vert, 1 Rouge : Moi connecté, partenaire non
+        } else if (myPresence) {
           updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
         } else {
-          // 2 Rouges : Non connecté
           updateStatusDots('red', 'red', 'Déconnecté');
         }
+      });
 
-      } catch (err) {
-        updateStatusDots('red', 'red', 'Erreur de connexion');
+      // Historique des messages
+      socket.on('history', (messages) => {
+        const box = document.getElementById('chat-box');
+        box.innerHTML = '';
+        messages.forEach(m => renderSingleMessage(m));
+        box.scrollTop = box.scrollHeight;
+      });
+
+      // Nouveau message reçu
+      socket.on('chat message', (msg) => {
+        renderSingleMessage(msg);
+        const box = document.getElementById('chat-box');
+        box.scrollTop = box.scrollHeight;
+      });
+
+      // Cartes
+      socket.on('cards_history', (cards) => {
+        allCards = cards;
+        renderCards();
+      });
+
+      socket.on('card_created', (card) => {
+        allCards.unshift(card);
+        renderCards();
+      });
+
+      socket.on('card_redeemed', (updatedCard) => {
+        const idx = allCards.findIndex(c => c.id === updatedCard.id);
+        if (idx !== -1) allCards[idx] = updatedCard;
+        renderCards();
+      });
+    }
+
+    function renderSingleMessage(m) {
+      let textToShow = '';
+      try {
+        const bytes = CryptoJS.AES.decrypt(m.message, ENCRYPTION_KEY);
+        textToShow = bytes.toString(CryptoJS.enc.Utf8);
+      } catch (e) { textToShow = ''; }
+
+      if (!textToShow) textToShow = m.message;
+
+      const isMine = (m.sender === currentUser);
+      const box = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      div.className = `msg-bubble ${isMine ? 'msg-mine' : 'msg-partner'}`;
+      div.innerHTML = `<div class="msg-sender">${m.sender}</div>${textToShow}`;
+      box.appendChild(div);
+    }
+
+    function sendMsg() {
+      const input = document.getElementById('chat-msg');
+      if (!input.value.trim() || !socket) return;
+
+      const encrypted = CryptoJS.AES.encrypt(input.value.trim(), ENCRYPTION_KEY).toString();
+      socket.emit('chat message', { sender: currentUser, message: encrypted });
+      input.value = '';
+    }
+
+    function renderCards() {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = '';
+
+      if (allCards.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color: var(--text-light);">Aucune carte pour le moment.</p>';
+        return;
+      }
+
+      allCards.forEach(c => {
+        const isForMe = c.recipient === currentUser;
+        const el = document.createElement('div');
+        el.className = `card-item ${c.is_redeemed ? 'redeemed' : ''}`;
+        el.innerHTML = `
+          <div class="card-icon">${c.icon}</div>
+          <div class="card-info">
+            <div class="card-title">${c.title}</div>
+            <div class="card-desc">${c.description || ''}</div>
+            <div style="font-size:0.7rem; color:var(--text-light);">De ${c.sender} pour ${c.recipient}</div>
+          </div>
+          ${!c.is_redeemed && isForMe ? `<button class="card-action" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
+          ${c.is_redeemed ? `<span style="font-size:0.75rem; color:#888;">Utilisée ❤️</span>` : ''}
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function createCard() {
+      const icon = document.getElementById('card-icon').value.trim() || '🌹';
+      const title = document.getElementById('card-title').value.trim();
+      const description = document.getElementById('card-desc').value.trim();
+
+      if (!title) return alert("Titre obligatoire");
+
+      socket.emit('create_card', { title, description, icon, sender: currentUser, recipient: partnerUser });
+      document.getElementById('card-title').value = '';
+      document.getElementById('card-desc').value = '';
+      switchTab('cards');
+    }
+
+    function redeemCard(id) {
+      if (confirm("Utiliser cette carte ? 🥰")) {
+        socket.emit('redeem_card', id);
       }
     }
 
     function updateStatusDots(dot1Color, dot2Color, text) {
-      const dotMe = document.getElementById('dot-me');
-      const dotPartner = document.getElementById('dot-partner');
-      
-      dotMe.className = `dot ${dot1Color}`;
-      dotPartner.className = `dot ${dot2Color}`;
+      document.getElementById('dot-me').className = `dot ${dot1Color}`;
+      document.getElementById('dot-partner').className = `dot ${dot2Color}`;
       document.getElementById('status-text').innerText = text;
     }
 
@@ -326,135 +343,8 @@
       document.getElementById('tab-cards').classList.add('hidden');
       document.getElementById('tab-create-card').classList.add('hidden');
 
-      if (tabName === 'chat') {
-        document.getElementById('tab-chat').classList.remove('hidden');
-      } else if (tabName === 'cards') {
-        document.getElementById('tab-cards').classList.remove('hidden');
-        loadCards();
-      } else if (tabName === 'create-card') {
-        document.getElementById('tab-create-card').classList.remove('hidden');
-      }
-
-      if (evt && evt.target) {
-        evt.target.classList.add('active');
-      }
-    }
-
-    async function loadMessages() {
-      try {
-        const res = await fetch('/.netlify/functions/messages');
-        if (!res.ok) return;
-
-        const data = await res.json();
-        const box = document.getElementById('chat-box');
-        box.innerHTML = '';
-
-        data.forEach(m => {
-          let textToShow = '';
-
-          // Tentative de déchiffrement AES
-          try {
-            const bytes = CryptoJS.AES.decrypt(m.encrypted_text, ENCRYPTION_KEY);
-            textToShow = bytes.toString(CryptoJS.enc.Utf8);
-          } catch (e) {
-            textToShow = '';
-          }
-
-          // Affichage du texte brut si non chiffré
-          if (!textToShow) {
-            textToShow = m.encrypted_text;
-          }
-
-          const isMine = (m.sender === currentUser);
-          const div = document.createElement('div');
-          div.className = `msg-bubble ${isMine ? 'msg-mine' : 'msg-partner'}`;
-          div.innerHTML = `<div class="msg-sender">${m.sender}</div>${textToShow}`;
-          box.appendChild(div);
-        });
-
-        box.scrollTop = box.scrollHeight;
-      } catch (err) {
-        console.error("Erreur chargement messages:", err);
-      }
-    }
-
-    async function sendMsg() {
-      const input = document.getElementById('chat-msg');
-      if (!input.value.trim()) return;
-
-      const encrypted = CryptoJS.AES.encrypt(input.value.trim(), ENCRYPTION_KEY).toString();
-      
-      await fetch('/.netlify/functions/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sender: currentUser, encrypted_text: encrypted })
-      });
-
-      input.value = '';
-      loadMessages();
-    }
-
-    async function loadCards() {
-      try {
-        const res = await fetch('/.netlify/functions/cards');
-        if (!res.ok) return;
-
-        const data = await res.json();
-        const container = document.getElementById('cards-container');
-        container.innerHTML = '';
-
-        if (!data || data.length === 0) {
-          container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem;">Aucune carte offerte pour le moment.</p>';
-          return;
-        }
-
-        data.forEach(c => {
-          const isForMe = c.recipient === currentUser;
-          const el = document.createElement('div');
-          el.className = `card-item ${c.is_redeemed ? 'redeemed' : ''}`;
-          el.innerHTML = `
-            <div class="card-icon">${c.icon}</div>
-            <div class="card-info">
-              <div class="card-title">${c.title}</div>
-              <div class="card-desc">${c.description || ''}</div>
-              <div style="font-size:0.7rem; color:var(--text-light); margin-top:4px;">De ${c.sender} pour ${c.recipient}</div>
-            </div>
-            ${!c.is_redeemed && isForMe ? `<button class="card-action" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
-            ${c.is_redeemed ? `<span style="font-size:0.75rem; color:#888;">Utilisée ❤️</span>` : ''}
-          `;
-          container.appendChild(el);
-        });
-      } catch (err) { 
-        console.error("Erreur chargement cartes:", err); 
-      }
-    }
-
-    async function createCard() {
-      const icon = document.getElementById('card-icon').value.trim() || '🌹';
-      const title = document.getElementById('card-title').value.trim();
-      const description = document.getElementById('card-desc').value.trim();
-
-      if (!title) return alert("Veuillez entrer un titre pour la carte");
-
-      await fetch('/.netlify/functions/cards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, icon, sender: currentUser, recipient: partnerUser })
-      });
-
-      document.getElementById('card-title').value = '';
-      document.getElementById('card-desc').value = '';
-      switchTab('cards');
-    }
-
-    async function redeemCard(id) {
-      if (!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
-      await fetch('/.netlify/functions/cards', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      });
-      loadCards();
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      if (evt && evt.target) evt.target.classList.add('active');
     }
   </script>
 </body>
