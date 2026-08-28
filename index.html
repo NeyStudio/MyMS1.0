@@ -159,7 +159,7 @@
         </div>
       </div>
 
-      <!-- Cartes & Cadeaux -->
+      <!-- Cartes & Cadeaux (Conservation intégrale) -->
       <div id="tab-cards" class="hidden">
         <div class="cards-grid" id="cards-container"></div>
       </div>
@@ -214,23 +214,26 @@
       document.getElementById('welcome-subtitle').innerText = `Espace privé partagé avec ${partnerUser}`;
 
       updateStatusDots('orange', 'red', 'Connexion en cours...');
-      
-      // Connexion directe à SC via Socket.io
+
       initSocket();
-      
-      // Chargement des cartes cadeaux (Netlify)
+
       loadCards();
       setInterval(loadCards, 6000);
     }
 
     function initSocket() {
-      socket = io(SOCKET_SERVER_URL);
+      // Configuration explicite des transports pour éviter le blocage CORS
+      socket = io(SOCKET_SERVER_URL, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        timeout: 10000
+      });
 
       socket.on('connect', () => {
         socket.emit('user joined', currentUser);
+        socket.emit('request history');
       });
 
-      // Gestion des voyants de présence via Socket.io (service SC)
       socket.on('online users', (onlineUsers) => {
         const myPresence = onlineUsers.includes(currentUser);
         const partnerPresence = onlineUsers.includes(partnerUser);
@@ -244,7 +247,6 @@
         }
       });
 
-      // Chargement de l'historique complet
       socket.on('history', (messages) => {
         const box = document.getElementById('chat-box');
         box.innerHTML = '';
@@ -252,37 +254,52 @@
         box.scrollTop = box.scrollHeight;
       });
 
-      // Réception de chaque nouveau message
       socket.on('chat message', (msg) => {
         renderMessage(msg);
         const box = document.getElementById('chat-box');
         box.scrollTop = box.scrollHeight;
       });
+
+      socket.on('connect_error', (err) => {
+        updateStatusDots('red', 'red', 'Erreur de connexion');
+      });
     }
 
     function renderMessage(m) {
+      // SC gère 'sender' ou 'user' et 'message' ou 'text'
+      const senderName = m.sender || m.user || 'Inconnu';
+      const rawText = m.message || m.text || '';
+
       let textToShow = '';
       try {
-        const bytes = CryptoJS.AES.decrypt(m.message, ENCRYPTION_KEY);
+        const bytes = CryptoJS.AES.decrypt(rawText, ENCRYPTION_KEY);
         textToShow = bytes.toString(CryptoJS.enc.Utf8);
       } catch (e) { textToShow = ''; }
 
-      if (!textToShow) textToShow = m.message;
+      if (!textToShow) textToShow = rawText;
 
-      const isMine = (m.sender === currentUser);
+      const isMine = (senderName === currentUser);
       const box = document.getElementById('chat-box');
       const div = document.createElement('div');
       div.className = `msg-bubble ${isMine ? 'msg-mine' : 'msg-partner'}`;
-      div.innerHTML = `<div class="msg-sender">${m.sender}</div>${textToShow}`;
+      div.innerHTML = `<div class="msg-sender">${senderName}</div>${textToShow}`;
       box.appendChild(div);
     }
 
     function sendMsg() {
       const input = document.getElementById('chat-msg');
-      if (!input.value.trim() || !socket) return;
+      if (!input.value.trim() || !socket || !socket.connected) return;
 
       const encrypted = CryptoJS.AES.encrypt(input.value.trim(), ENCRYPTION_KEY).toString();
-      socket.emit('chat message', { sender: currentUser, message: encrypted });
+      
+      // Compatibilité totale avec la structure attendue par SC
+      socket.emit('chat message', {
+        sender: currentUser,
+        user: currentUser,
+        message: encrypted,
+        text: encrypted
+      });
+      
       input.value = '';
     }
 
