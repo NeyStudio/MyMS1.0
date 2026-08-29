@@ -2,197 +2,445 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Convertisseur Duodécimal & Mathématiques</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <style>
     :root {
-      --bg-color: #FAF6F0;
-      --card-bg: rgba(255, 255, 255, 0.88);
-      --rose: #E8A598;
-      --rose-dark: #C97C6D;
-      --text: #4A403A;
-      --text-light: #8C7A6B;
-      --shadow: 0 10px 30px rgba(180, 150, 130, 0.12);
-      --radius: 20px;
+      --bg-gradient: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 70%, #93F9B9 100%);
+      --card-bg: rgba(255, 255, 255, 0.92);
+      --eric-bubble: linear-gradient(135deg, #1E3C72 0%, #2A5298 100%);
+      --olga-bubble: linear-gradient(135deg, #FF758C 0%, #FF7EB3 100%);
+      --text-dark: #2C3E50;
+      --text-light: #7F8C8D;
+      --shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg-color);
-      color: var(--text);
-      min-height: 100vh;
+      background: var(--bg-gradient);
+      color: var(--text-dark);
+    }
+
+    body {
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 20px;
-      background-image: radial-gradient(#E8A598 0.5px, transparent 0.5px);
-      background-size: 24px 24px;
     }
 
     .container {
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      box-shadow: var(--shadow);
-      border-radius: var(--radius);
       width: 100%;
-      max-width: 480px;
-      padding: 32px;
+      height: 100%;
+      max-width: 500px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      position: relative;
     }
 
-    h1 { font-family: 'Cormorant Garamond', serif; font-size: 2rem; text-align: center; margin-bottom: 8px; }
+    @media (min-width: 501px) {
+      .container {
+        height: 92vh;
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+    }
+
+    /* Public Converter UI */
+    #public-app {
+      padding: 32px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+    }
+
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; text-align: center; margin-bottom: 8px; color: #1E3C72; }
     .subtitle { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 24px; }
 
     input, textarea {
       width: 100%;
       padding: 14px 16px;
-      border: 1.5px solid #E6DCD3;
+      border: 1.5px solid #E2E8F0;
       border-radius: 12px;
       background: #FFF;
-      color: var(--text);
+      color: var(--text-dark);
       font-family: inherit;
       font-size: 0.95rem;
       outline: none;
     }
 
-    button {
+    button.btn-primary {
       width: 100%;
       padding: 14px;
       border: none;
       border-radius: 12px;
-      background: var(--rose);
+      background: linear-gradient(135deg, #1E3C72 0%, #FF758C 100%);
       color: white;
       font-weight: 600;
-      font-size: 0.95rem;
+      font-size: 1rem;
       cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
-    button:hover { background: var(--rose-dark); }
 
     .hidden { display: none !important; }
 
-    /* Presence Bar */
+    /* Header & Status Bar */
+    .app-header {
+      padding: 16px;
+      background: #FFFFFF;
+      border-bottom: 1px solid #EDF2F7;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
     .status-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #F2ECE4;
-      padding: 10px 16px;
-      border-radius: 12px;
-      margin-bottom: 16px;
+      background: #F7FAFC;
+      padding: 8px 14px;
+      border-radius: 20px;
     }
+    
     .status-dots { display: flex; gap: 6px; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; background: #E53935; transition: background 0.3s; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #E53935; transition: background 0.3s; }
     .dot.orange { background: #FB8C00; }
     .dot.green { background: #4CAF50; }
     .dot.red { background: #E53935; }
-    .status-text { font-size: 0.8rem; color: var(--text-light); font-weight: 500; }
+    .status-text { font-size: 0.78rem; color: var(--text-light); font-weight: 500; }
 
-    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; background: #F0E8DF; padding: 4px; border-radius: 12px; }
-    .tab-btn { flex: 1; padding: 8px; background: transparent; color: var(--text-light); font-size: 0.85rem; }
-    .tab-btn.active { background: #FFF; color: var(--rose-dark); }
+    /* Tab Navigation */
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      background: #EDF2F7;
+      padding: 4px;
+      border-radius: 14px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text-light);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .tab-btn.active { background: #FFF; color: #1E3C72; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
 
-    /* Chat UI */
-    #chat-box { height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
-    .msg-bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 0.9rem; }
-    .msg-mine { align-self: flex-end; background: var(--rose); color: white; border-bottom-right-radius: 4px; }
-    .msg-partner { align-self: flex-start; background: #F0EADF; color: var(--text); border-bottom-left-radius: 4px; }
-    .msg-sender { font-size: 0.7rem; opacity: 0.8; margin-bottom: 2px; }
+    /* Content Area */
+    .app-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
 
-    /* Cards UI */
-    .cards-grid { display: flex; flex-direction: column; gap: 12px; max-height: 320px; overflow-y: auto; }
-    .card-item { background: #FFF; border: 1.5px dashed var(--rose); border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px; }
-    .card-item.redeemed { opacity: 0.5; border-style: solid; border-color: #DDD; background: #FAF8F5; }
-    .card-icon { font-size: 1.8rem; }
-    .card-info { flex: 1; }
-    .card-title { font-weight: 600; font-size: 0.95rem; }
-    .card-desc { font-size: 0.8rem; color: var(--text-light); }
-    .card-action { width: auto; padding: 6px 12px; font-size: 0.75rem; }
+    /* Date Separator */
+    .date-separator {
+      align-self: center;
+      background: #E2E8F0;
+      color: #4A5568;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 12px;
+      margin: 12px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Chat Messages */
+    #chat-box {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg-bubble {
+      max-width: 82%;
+      padding: 10px 14px;
+      border-radius: 18px;
+      font-size: 0.92rem;
+      line-height: 1.4;
+      position: relative;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+      word-break: break-word;
+    }
+
+    .msg-eric {
+      align-self: flex-end;
+      background: var(--eric-bubble);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-olga {
+      align-self: flex-start;
+      background: var(--olga-bubble);
+      color: white;
+      border-bottom-left-radius: 4px;
+    }
+
+    .msg-info {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      font-size: 0.68rem;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .ticks { font-size: 0.75rem; font-weight: bold; }
+
+    /* Attachment Card in Chat */
+    .chat-attachment-card {
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px dashed rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 6px;
+      backdrop-filter: blur(4px);
+    }
+    .chat-card-title { font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; }
+
+    /* Input Bar */
+    .input-bar-container {
+      padding: 12px 16px;
+      background: #FFFFFF;
+      border-top: 1px solid #EDF2F7;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: #EDF2F7;
+      color: #4A5568;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .send-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #1E3C72 0%, #FF758C 100%);
+      color: white;
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Selected Attachment Preview */
+    .attachment-preview {
+      background: #F7FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.82rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Cards Tab (Mirror Layout) */
+    .cards-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-bottom: 60px;
+    }
+
+    .card-item-wrapper {
+      display: flex;
+      width: 100%;
+    }
+
+    .card-item-wrapper.sent { justify-content: flex-end; }
+    .card-item-wrapper.received { justify-content: flex-start; }
+
+    .card-item {
+      max-width: 85%;
+      background: #FFF;
+      border-radius: 16px;
+      padding: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border: 1.5px solid #E2E8F0;
+    }
+    .card-item-wrapper.sent .card-item { border-color: #2A5298; }
+    .card-item-wrapper.received .card-item { border-color: #FF758C; }
+
+    .card-item.redeemed { opacity: 0.6; background: #F7FAFC; border-style: dashed; }
+    
+    .floating-add-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FF758C 0%, #1E3C72 100%);
+      color: white;
+      font-size: 1.5rem;
+      border: none;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-card {
+      background: white;
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 360px;
+    }
   </style>
 </head>
 <body>
 
   <div class="container">
+    
     <!-- CONVERTISSEUR (Interface Publique) -->
     <div id="public-app">
       <h1>Convertisseur Duodécimal</h1>
       <p class="subtitle">Convertissez vos valeurs de la base 12 à la base 10.</p>
+      
       <div style="margin-bottom: 16px;">
         <input type="text" id="b12-input" placeholder="Ex: 2B4, 1A..." autocomplete="off">
       </div>
-      <button onclick="handleConvert()">Convertir</button>
-      <div style="margin-top: 20px; padding: 16px; background: #FAEDCD; border-radius: 12px; text-align: center;">
+      <button class="btn-primary" onclick="handleConvert()">Convertir</button>
+      
+      <div style="margin-top: 24px; padding: 16px; background: #EDF2F7; border-radius: 12px; text-align: center; color: #4A5568;">
         Résultat en Base 10 : <strong id="b10-output">-</strong>
       </div>
     </div>
 
-    <!-- NOTRE COCON -->
-    <div id="secret-app" class="hidden">
-      <h1 id="welcome-title">Notre Cocon 💖</h1>
-      <p class="subtitle" id="welcome-subtitle"></p>
+    <!-- NOTRE COCON (Interface Messagerie) -->
+    <div id="secret-app" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
+      
+      <!-- Header -->
+      <div class="app-header">
+        <div class="status-bar">
+          <span class="status-text" id="status-text">Mise en connexion...</span>
+          <div class="status-dots">
+            <div class="dot" id="dot-me"></div>
+            <div class="dot" id="dot-partner"></div>
+          </div>
+        </div>
 
-      <!-- Présence -->
-      <div class="status-bar">
-        <span class="status-text" id="status-text">Mise en connexion...</span>
-        <div class="status-dots">
-          <div class="dot" id="dot-me"></div>
-          <div class="dot" id="dot-partner"></div>
+        <div class="nav-tabs">
+          <button class="tab-btn active" id="tab-btn-chat" onclick="switchTab('chat')">Messagerie</button>
+          <button class="tab-btn" id="tab-btn-cards" onclick="switchTab('cards')">Cartes & Rewards</button>
         </div>
       </div>
 
-      <div class="nav-tabs">
-        <button class="tab-btn active" onclick="switchTab('chat', event)">Messagerie</button>
-        <button class="tab-btn" onclick="switchTab('cards', event)">Cartes & Rewards</button>
-        <button class="tab-btn" onclick="switchTab('create-card', event)">+ Offrir</button>
-      </div>
+      <!-- Section Messagerie -->
+      <div id="section-chat" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="app-content" id="chat-box-container">
+          <div id="chat-box"></div>
+        </div>
 
-      <!-- Messagerie -->
-      <div id="tab-chat">
-        <div id="chat-box"></div>
-        <div style="display: flex; gap: 8px;">
-          <input type="text" id="chat-msg" placeholder="Ton doux message..." onkeypress="if(event.key==='Enter') sendMsg()">
-          <button style="width: 80px;" onclick="sendMsg()">Envoyer</button>
+        <!-- Zone d'envoi -->
+        <div class="input-bar-container">
+          <div id="attachment-preview" class="attachment-preview hidden">
+            <span> Carte jointe : <strong id="preview-card-title"></strong></span>
+            <span style="cursor:pointer; color:#E53935;" onclick="removeAttachment()">✕</span>
+          </div>
+
+          <div class="input-bar">
+            <button class="action-btn" id="attach-btn" onclick="toggleAttachmentMenu()">+</button>
+            <input type="text" id="chat-msg" placeholder="Ton doux message..." oninput="onMessageInput()" onkeypress="if(event.key==='Enter') sendMsg()">
+            <button class="send-btn" onclick="sendMsg()">➔</button>
+          </div>
         </div>
       </div>
 
-      <!-- Cartes & Cadeaux (Conservation intégrale) -->
-      <div id="tab-cards" class="hidden">
-        <div class="cards-grid" id="cards-container"></div>
+      <!-- Section Cartes & Rewards -->
+      <div id="section-cards" class="app-content hidden" style="position: relative;">
+        <div class="cards-container" id="cards-container"></div>
+        <button class="floating-add-btn" onclick="openCreateCardModal()">+</button>
       </div>
 
-      <div id="tab-create-card" class="hidden">
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 0.8rem; color: var(--text-light);">Icône / Emoji</label>
-          <input type="text" id="card-icon" value="🌹">
-        </div>
-        <div style="margin-bottom: 12px;">
-          <label style="font-size: 0.8rem; color: var(--text-light);">Titre de la carte</label>
-          <input type="text" id="card-title" placeholder="Ex: Soirée restaurant au choix">
-        </div>
-        <div style="margin-bottom: 16px;">
-          <label style="font-size: 0.8rem; color: var(--text-light);">Précision (optionnel)</label>
-          <textarea id="card-desc" rows="2" placeholder="Quand tu le souhaites..."></textarea>
-        </div>
-        <button onclick="createCard()">Offrir cette carte 💌</button>
-      </div>
+    </div>
 
+  </div>
+
+  <!-- Modal Création de Carte -->
+  <div id="card-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3 style="font-family:'Cormorant Garamond'; font-size:1.5rem; margin-bottom:12px; text-align:center;">Offrir une carte 💌</h3>
+      <input type="text" id="modal-card-icon" value="🌹" style="margin-bottom:8px;" placeholder="Emoji (ex: 🥐, 💆‍♂️)">
+      <input type="text" id="modal-card-title" placeholder="Titre (ex: Massage 20 min)" style="margin-bottom:8px;">
+      <textarea id="modal-card-desc" rows="2" placeholder="Petite précision..." style="margin-bottom:12px;"></textarea>
+      
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary" style="flex:1; background:#EDF2F7; color:#4A5568;" onclick="closeCreateCardModal()">Annuler</button>
+        <button class="btn-primary" style="flex:1;" onclick="submitCardModal()">Offrir</button>
+      </div>
     </div>
   </div>
 
   <script>
     const PASSWORDS = { "ERIC12": "Eric", "OLGA12": "Olga" };
     const ENCRYPTION_KEY = "CleSecreteCocon2026";
-    
-    // URL directe vers le service SC actif sur Railway
     const SOCKET_SERVER_URL = "https://sc-production-6d0a.up.railway.app"; 
 
     let currentUser = "";
     let partnerUser = "";
     let socket = null;
+    let selectedCardToAttach = null;
+    let localCards = [];
 
     function handleConvert() {
       const val = document.getElementById('b12-input').value.trim().toUpperCase();
@@ -210,23 +458,16 @@
       document.getElementById('public-app').classList.add('hidden');
       document.getElementById('secret-app').classList.remove('hidden');
 
-      document.getElementById('welcome-title').innerText = `Coucou ${currentUser} 💖`;
-      document.getElementById('welcome-subtitle').innerText = `Espace privé partagé avec ${partnerUser}`;
-
       updateStatusDots('orange', 'red', 'Connexion en cours...');
-
       initSocket();
-
       loadCards();
       setInterval(loadCards, 6000);
     }
 
     function initSocket() {
-      // Configuration explicite des transports pour éviter le blocage CORS
       socket = io(SOCKET_SERVER_URL, {
         transports: ['websocket', 'polling'],
-        reconnectionAttempts: 5,
-        timeout: 10000
+        reconnectionAttempts: 5
       });
 
       socket.on('connect', () => {
@@ -240,7 +481,7 @@
 
         if (myPresence && partnerPresence) {
           updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
-        } else if (myPresence && !partnerPresence) {
+        } else if (myPresence) {
           updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
         } else {
           updateStatusDots('red', 'red', 'Déconnecté');
@@ -248,116 +489,196 @@
       });
 
       socket.on('history', (messages) => {
-        const box = document.getElementById('chat-box');
-        box.innerHTML = '';
-        messages.forEach(m => renderMessage(m));
-        box.scrollTop = box.scrollHeight;
+        renderChatHistory(messages);
       });
 
-      socket.on('chat message', (msg) => {
-        renderMessage(msg);
-        const box = document.getElementById('chat-box');
-        box.scrollTop = box.scrollHeight;
+      socket.on('chat message', () => {
+        socket.emit('request history');
       });
 
-      socket.on('connect_error', (err) => {
-        updateStatusDots('red', 'red', 'Erreur de connexion');
+      socket.on('connect_error', () => {
+        updateStatusDots('red', 'red', 'Erreur réseau');
       });
     }
 
-    function renderMessage(m) {
-      // SC gère 'sender' ou 'user' et 'message' ou 'text'
-      const senderName = m.sender || m.user || 'Inconnu';
-      const rawText = m.message || m.text || '';
-
-      let textToShow = '';
-      try {
-        const bytes = CryptoJS.AES.decrypt(rawText, ENCRYPTION_KEY);
-        textToShow = bytes.toString(CryptoJS.enc.Utf8);
-      } catch (e) { textToShow = ''; }
-
-      if (!textToShow) textToShow = rawText;
-
-      const isMine = (senderName === currentUser);
+    /* Rendu Messagerie & Horodatage */
+    function renderChatHistory(messages) {
       const box = document.getElementById('chat-box');
-      const div = document.createElement('div');
-      div.className = `msg-bubble ${isMine ? 'msg-mine' : 'msg-partner'}`;
-      div.innerHTML = `<div class="msg-sender">${senderName}</div>${textToShow}`;
-      box.appendChild(div);
+      box.innerHTML = '';
+      let lastDateStr = '';
+
+      messages.forEach(m => {
+        const msgDate = new Date(m.timestamp || Date.now());
+        const dateStr = formatDateSeparator(msgDate);
+
+        if (dateStr !== lastDateStr) {
+          const sep = document.createElement('div');
+          sep.className = 'date-separator';
+          sep.innerText = dateStr;
+          box.appendChild(sep);
+          lastDateStr = dateStr;
+        }
+
+        const senderName = m.sender || m.user || 'Inconnu';
+        const rawText = m.message || m.text || '';
+        let textToShow = '';
+
+        try {
+          const bytes = CryptoJS.AES.decrypt(rawText, ENCRYPTION_KEY);
+          textToShow = bytes.toString(CryptoJS.enc.Utf8);
+        } catch (e) { textToShow = ''; }
+
+        if (!textToShow) textToShow = rawText;
+
+        const isMine = (senderName === currentUser);
+        const bubble = document.createElement('div');
+        bubble.className = `msg-bubble ${senderName === 'Eric' ? 'msg-eric' : 'msg-olga'}`;
+        
+        const timeFormatted = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const ticks = isMine ? '<span class="ticks">✓✓</span>' : '<span class="ticks">✓</span>';
+
+        let attachmentHTML = '';
+        if (m.card_id || m.card) {
+          const card = m.card || localCards.find(c => c.id === m.card_id);
+          if (card) {
+            attachmentHTML = `
+              <div class="chat-attachment-card">
+                <div class="chat-card-title">${card.icon || '🌹'} ${card.title}</div>
+                <div style="font-size:0.75rem; margin-top:2px; opacity:0.9;">${card.description || ''}</div>
+              </div>
+            `;
+          }
+        }
+
+        bubble.innerHTML = `
+          <div>${textToShow}</div>
+          ${attachmentHTML}
+          <div class="msg-info">
+            <span>${timeFormatted}</span>
+            ${ticks}
+          </div>
+        `;
+        box.appendChild(bubble);
+      });
+
+      const container = document.getElementById('chat-box-container');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function formatDateSeparator(date) {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
+      if (date.toDateString() === yesterday.toDateString()) return "Hier";
+      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    }
+
+    function onMessageInput() {
+      const text = document.getElementById('chat-msg').value;
+      const attachBtn = document.getElementById('attach-btn');
+      attachBtn.innerText = text.trim().length > 0 ? "📎" : "+";
+    }
+
+    function toggleAttachmentMenu() {
+      openCreateCardModal();
     }
 
     function sendMsg() {
       const input = document.getElementById('chat-msg');
-      if (!input.value.trim() || !socket || !socket.connected) return;
+      if (!input.value.trim() && !selectedCardToAttach) return;
 
-      const encrypted = CryptoJS.AES.encrypt(input.value.trim(), ENCRYPTION_KEY).toString();
+      const encrypted = CryptoJS.AES.encrypt(input.value.trim() || "[Carte Cadeau Jointe]", ENCRYPTION_KEY).toString();
       
-      // Compatibilité totale avec la structure attendue par SC
-      socket.emit('chat message', {
+      const payload = {
         sender: currentUser,
         user: currentUser,
         message: encrypted,
-        text: encrypted
-      });
-      
+        text: encrypted,
+        card_id: selectedCardToAttach ? selectedCardToAttach.id : null
+      };
+
+      socket.emit('chat message', payload);
       input.value = '';
+      removeAttachment();
+      onMessageInput();
     }
 
-    function updateStatusDots(dot1Color, dot2Color, text) {
-      document.getElementById('dot-me').className = `dot ${dot1Color}`;
-      document.getElementById('dot-partner').className = `dot ${dot2Color}`;
-      document.getElementById('status-text').innerText = text;
-    }
-
-    // --- CARTES & CADEAUX ---
+    /* Cartes & Rewards (Mise en page Miroir) */
     async function loadCards() {
       try {
         const res = await fetch('/.netlify/functions/cards');
         if (!res.ok) return;
-        const data = await res.json();
-        const container = document.getElementById('cards-container');
-        container.innerHTML = '';
-
-        if (!data || data.length === 0) {
-          container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem;">Aucune carte offerte pour le moment.</p>';
-          return;
-        }
-
-        data.forEach(c => {
-          const isForMe = c.recipient === currentUser;
-          const el = document.createElement('div');
-          el.className = `card-item ${c.is_redeemed ? 'redeemed' : ''}`;
-          el.innerHTML = `
-            <div class="card-icon">${c.icon}</div>
-            <div class="card-info">
-              <div class="card-title">${c.title}</div>
-              <div class="card-desc">${c.description || ''}</div>
-              <div style="font-size:0.7rem; color:var(--text-light); margin-top:4px;">De ${c.sender} pour ${c.recipient}</div>
-            </div>
-            ${!c.is_redeemed && isForMe ? `<button class="card-action" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
-            ${c.is_redeemed ? `<span style="font-size:0.75rem; color:#888;">Utilisée ❤️</span>` : ''}
-          `;
-          container.appendChild(el);
-        });
+        localCards = await res.json();
+        renderCards();
       } catch (err) { console.error(err); }
     }
 
-    async function createCard() {
-      const icon = document.getElementById('card-icon').value.trim() || '🌹';
-      const title = document.getElementById('card-title').value.trim();
-      const description = document.getElementById('card-desc').value.trim();
+    function renderCards() {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = '';
 
-      if (!title) return alert("Veuillez entrer un titre pour la carte");
+      if (localCards.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem; margin-top:20px;">Aucune carte pour le moment.</p>';
+        return;
+      }
 
-      await fetch('/.netlify/functions/cards', {
+      localCards.forEach(c => {
+        const isMine = c.sender === currentUser;
+        const wrapper = document.createElement('div');
+        wrapper.className = `card-item-wrapper ${isMine ? 'sent' : 'received'}`;
+
+        wrapper.innerHTML = `
+          <div class="card-item ${c.is_redeemed ? 'redeemed' : ''}">
+            <div style="font-size:1.6rem; margin-bottom:4px;">${c.icon}</div>
+            <div style="font-weight:700; font-size:0.95rem;">${c.title}</div>
+            <div style="font-size:0.8rem; color:var(--text-light); margin-top:2px;">${c.description || ''}</div>
+            <div style="font-size:0.7rem; color:var(--text-light); margin-top:6px;">
+              De <strong>${c.sender}</strong> pour <strong>${c.recipient}</strong>
+            </div>
+            ${!c.is_redeemed && !isMine ? `<button class="btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
+            ${c.is_redeemed ? `<div style="font-size:0.75rem; color:#888; margin-top:6px;">Utilisée ❤️</div>` : ''}
+          </div>
+        `;
+        container.appendChild(wrapper);
+      });
+    }
+
+    function openCreateCardModal() {
+      document.getElementById('card-modal').classList.remove('hidden');
+    }
+
+    function closeCreateCardModal() {
+      document.getElementById('card-modal').classList.add('hidden');
+    }
+
+    async function submitCardModal() {
+      const icon = document.getElementById('modal-card-icon').value.trim() || '🌹';
+      const title = document.getElementById('modal-card-title').value.trim();
+      const description = document.getElementById('modal-card-desc').value.trim();
+
+      if (!title) return alert("Veuillez entrer un titre");
+
+      const res = await fetch('/.netlify/functions/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, description, icon, sender: currentUser, recipient: partnerUser })
       });
 
-      document.getElementById('card-title').value = '';
-      document.getElementById('card-desc').value = '';
-      switchTab('cards');
+      const newCard = await res.json();
+      closeCreateCardModal();
+      loadCards();
+
+      // Joindre automatiquement au message si on est dans l'onglet chat
+      selectedCardToAttach = newCard;
+      document.getElementById('preview-card-title').innerText = `${newCard.icon} ${newCard.title}`;
+      document.getElementById('attachment-preview').classList.remove('hidden');
+    }
+
+    function removeAttachment() {
+      selectedCardToAttach = null;
+      document.getElementById('attachment-preview').classList.add('hidden');
     }
 
     async function redeemCard(id) {
@@ -370,22 +691,26 @@
       loadCards();
     }
 
-    function switchTab(tabName, evt) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById('tab-chat').classList.add('hidden');
-      document.getElementById('tab-cards').classList.add('hidden');
-      document.getElementById('tab-create-card').classList.add('hidden');
+    function updateStatusDots(dot1Color, dot2Color, text) {
+      document.getElementById('dot-me').className = `dot ${dot1Color}`;
+      document.getElementById('dot-partner').className = `dot ${dot2Color}`;
+      document.getElementById('status-text').innerText = text;
+    }
+
+    function switchTab(tabName) {
+      document.getElementById('tab-btn-chat').classList.remove('active');
+      document.getElementById('tab-btn-cards').classList.remove('active');
+      document.getElementById('section-chat').classList.add('hidden');
+      document.getElementById('section-cards').classList.add('hidden');
 
       if (tabName === 'chat') {
-        document.getElementById('tab-chat').classList.remove('hidden');
-      } else if (tabName === 'cards') {
-        document.getElementById('tab-cards').classList.remove('hidden');
+        document.getElementById('tab-btn-chat').classList.add('active');
+        document.getElementById('section-chat').classList.remove('hidden');
+      } else {
+        document.getElementById('tab-btn-cards').classList.add('active');
+        document.getElementById('section-cards').classList.remove('hidden');
         loadCards();
-      } else if (tabName === 'create-card') {
-        document.getElementById('tab-create-card').classList.remove('hidden');
       }
-
-      if (evt && evt.target) evt.target.classList.add('active');
     }
   </script>
 </body>
