@@ -22,6 +22,20 @@ iframe[src*="netlify"] {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+    /* Masque définitivement la barre et l'icône Netlify Feedback */
+[data-netlify-deploy-id],
+[class*="netlify"],
+[id*="netlify"],
+netlify-drawer,
+iframe[src*="netlify"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
 
     :root {
       --bg-gradient: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 70%, #93F9B9 100%);
