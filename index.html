@@ -5,14 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Convertisseur Duodécimal & Mathématiques</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0F2027">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
-  <style> 
+  <style>
     :root {
       --bg-gradient: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 70%, #93F9B9 100%);
       --card-bg: rgba(255, 255, 255, 0.92);
@@ -21,6 +17,21 @@
       --text-dark: #2C3E50;
       --text-light: #7F8C8D;
       --shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    /* MASQUAGE DEFINITIF DU BADGE NETLIFY */
+    [data-netlify-deploy-id],
+    [class*="netlify"],
+    [id*="netlify"],
+    netlify-drawer,
+    iframe[src*="netlify"],
+    .netlify-badge {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      height: 0 !important;
+      width: 0 !important;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -125,7 +136,7 @@
     .dot.red { background: #E53935; }
     .status-text { font-size: 0.78rem; color: var(--text-light); font-weight: 500; }
 
-    /* Tab Navigation */
+    /* Navigation */
     .nav-tabs {
       display: flex;
       gap: 6px;
@@ -213,17 +224,6 @@
 
     .ticks { font-size: 0.75rem; font-weight: bold; }
 
-    /* Attachment Card in Chat */
-    .chat-attachment-card {
-      background: rgba(255, 255, 255, 0.25);
-      border: 1px dashed rgba(255, 255, 255, 0.8);
-      border-radius: 12px;
-      padding: 10px;
-      margin-top: 6px;
-      backdrop-filter: blur(4px);
-    }
-    .chat-card-title { font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; }
-
     /* Input Bar */
     .input-bar-container {
       padding: 12px 16px;
@@ -270,7 +270,6 @@
       justify-content: center;
     }
 
-    /* Selected Attachment Preview */
     .attachment-preview {
       background: #F7FAFC;
       border: 1px solid #E2E8F0;
@@ -282,7 +281,7 @@
       justify-content: space-between;
     }
 
-    /* Cards Tab (Mirror Layout) */
+    /* Cards Layout (Mirror) */
     .cards-container {
       display: flex;
       flex-direction: column;
@@ -355,7 +354,7 @@
 
   <div class="container">
     
-    <!-- CONVERTISSEUR (Interface Publique) -->
+    <!-- CONVERTISSEUR -->
     <div id="public-app">
       <h1>Convertisseur Duodécimal</h1>
       <p class="subtitle">Convertissez vos valeurs de la base 12 à la base 10.</p>
@@ -370,13 +369,12 @@
       </div>
     </div>
 
-    <!-- NOTRE COCON (Interface Messagerie) -->
+    <!-- COCON -->
     <div id="secret-app" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
       
-      <!-- Header -->
       <div class="app-header">
         <div class="status-bar">
-          <span class="status-text" id="status-text">Mise en connexion...</span>
+          <span class="status-text" id="status-text">Connexion...</span>
           <div class="status-dots">
             <div class="dot" id="dot-me"></div>
             <div class="dot" id="dot-partner"></div>
@@ -389,16 +387,15 @@
         </div>
       </div>
 
-      <!-- Section Messagerie -->
+      <!-- Messagerie -->
       <div id="section-chat" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
         <div class="app-content" id="chat-box-container">
           <div id="chat-box"></div>
         </div>
 
-        <!-- Zone d'envoi -->
         <div class="input-bar-container">
           <div id="attachment-preview" class="attachment-preview hidden">
-            <span> Carte jointe : <strong id="preview-card-title"></strong></span>
+            <span>Carte jointe : <strong id="preview-card-title"></strong></span>
             <span style="cursor:pointer; color:#E53935;" onclick="removeAttachment()">✕</span>
           </div>
 
@@ -410,7 +407,7 @@
         </div>
       </div>
 
-      <!-- Section Cartes & Rewards -->
+      <!-- Cartes -->
       <div id="section-cards" class="app-content hidden" style="position: relative;">
         <div class="cards-container" id="cards-container"></div>
         <button class="floating-add-btn" onclick="openCreateCardModal()">+</button>
@@ -420,13 +417,13 @@
 
   </div>
 
-  <!-- Modal Création de Carte -->
+  <!-- Modal Création -->
   <div id="card-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <h3 style="font-family:'Cormorant Garamond'; font-size:1.5rem; margin-bottom:12px; text-align:center;">Offrir une carte 💌</h3>
       <input type="text" id="modal-card-icon" value="🌹" style="margin-bottom:8px;" placeholder="Emoji (ex: 🥐, 💆‍♂️)">
-      <input type="text" id="modal-card-title" placeholder="Titre (ex: Massage 20 min)" style="margin-bottom:8px;">
-      <textarea id="modal-card-desc" rows="2" placeholder="Petite précision..." style="margin-bottom:12px;"></textarea>
+      <input type="text" id="modal-card-title" placeholder="Titre (ex: Soirée restaurant)" style="margin-bottom:8px;">
+      <textarea id="modal-card-desc" rows="2" placeholder="Précision..." style="margin-bottom:12px;"></textarea>
       
       <div style="display:flex; gap:8px;">
         <button class="btn-primary" style="flex:1; background:#EDF2F7; color:#4A5568;" onclick="closeCreateCardModal()">Annuler</button>
@@ -434,300 +431,306 @@
       </div>
     </div>
   </div>
-<script>
-  const PASSWORDS = { "ERIC12": "Eric", "OLGA12": "Olga" };
-  const ENCRYPTION_KEY = "CleSecreteCocon2026";
-  const SOCKET_SERVER_URL = "https://sc-production-6d0a.up.railway.app"; 
 
-  let currentUser = "";
-  let partnerUser = "";
-  let socket = null;
-  let selectedCardToAttach = null;
-  let localCards = [];
+  <script>
+    const PASSWORDS = { "ERIC12": "Eric", "OLGA12": "Olga" };
+    const ENCRYPTION_KEY = "CleSecreteCocon2026";
+    const SOCKET_SERVER_URL = "https://sc-production-6d0a.up.railway.app"; 
 
-  function handleConvert() {
-    const val = document.getElementById('b12-input').value.trim().toUpperCase();
-    if (PASSWORDS[val]) {
-      currentUser = PASSWORDS[val];
-      partnerUser = currentUser === "Eric" ? "Olga" : "Eric";
-      unlockApp();
-      return;
+    let currentUser = "";
+    let partnerUser = "";
+    let socket = null;
+    let selectedCardToAttach = null;
+    let localCards = [];
+
+    function handleConvert() {
+      const val = document.getElementById('b12-input').value.trim().toUpperCase();
+      if (PASSWORDS[val]) {
+        currentUser = PASSWORDS[val];
+        partnerUser = currentUser === "Eric" ? "Olga" : "Eric";
+        unlockApp();
+        return;
+      }
+      const parsed = parseInt(val, 12);
+      document.getElementById('b10-output').innerText = isNaN(parsed) ? "Valeur invalide" : parsed.toString(10);
     }
-    const parsed = parseInt(val, 12);
-    document.getElementById('b10-output').innerText = isNaN(parsed) ? "Valeur invalide" : parsed.toString(10);
-  }
 
-  function unlockApp() {
-    document.getElementById('public-app').classList.add('hidden');
-    document.getElementById('secret-app').classList.remove('hidden');
+    function unlockApp() {
+      document.getElementById('public-app').classList.add('hidden');
+      document.getElementById('secret-app').classList.remove('hidden');
 
-    updateStatusDots('orange', 'red', 'Connexion en cours...');
-    initSocket();
-    
-    // Chargement initial et rafraîchissement des cartes Netlify
-    loadCards();
-    setInterval(loadCards, 5000);
-  }
+      updateStatusDots('orange', 'red', 'Connexion en cours...');
+      initSocket();
+      loadCards();
+      setInterval(loadCards, 5000);
+    }
 
-  function initSocket() {
-    socket = io(SOCKET_SERVER_URL, {
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5
-    });
+    function initSocket() {
+      socket = io(SOCKET_SERVER_URL, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5
+      });
 
-    socket.on('connect', () => {
-      socket.emit('user joined', currentUser);
-      socket.emit('request history');
-    });
+      socket.on('connect', () => {
+        socket.emit('user joined', currentUser);
+        socket.emit('request history');
+      });
 
-    socket.on('online users', (onlineUsers) => {
-      const myPresence = onlineUsers.includes(currentUser);
-      const partnerPresence = onlineUsers.includes(partnerUser);
+      socket.on('online users', (onlineUsers) => {
+        const myPresence = onlineUsers.includes(currentUser);
+        const partnerPresence = onlineUsers.includes(partnerUser);
 
-      if (myPresence && partnerPresence) {
-        updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
-      } else if (myPresence) {
-        updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
-      } else {
-        updateStatusDots('red', 'red', 'Déconnecté');
+        if (myPresence && partnerPresence) {
+          updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
+        } else if (myPresence) {
+          updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
+        } else {
+          updateStatusDots('red', 'red', 'Déconnecté');
+        }
+      });
+
+      socket.on('history', (messages) => {
+        renderChatHistory(messages);
+      });
+
+      socket.on('chat message', () => {
+        socket.emit('request history');
+      });
+
+      socket.on('connect_error', () => {
+        updateStatusDots('red', 'red', 'Erreur réseau');
+      });
+    }
+
+    function renderChatHistory(messages) {
+      const box = document.getElementById('chat-box');
+      box.innerHTML = '';
+      let lastDateStr = '';
+
+      messages.forEach(m => {
+        const msgDate = new Date(m.timestamp || Date.now());
+        const dateStr = formatDateSeparator(msgDate);
+
+        if (dateStr !== lastDateStr) {
+          const sep = document.createElement('div');
+          sep.className = 'date-separator';
+          sep.innerText = dateStr;
+          box.appendChild(sep);
+          lastDateStr = dateStr;
+        }
+
+        const senderName = m.sender || m.user || 'Inconnu';
+        const rawText = m.message || m.text || '';
+        let textToShow = '';
+
+        try {
+          const bytes = CryptoJS.AES.decrypt(rawText, ENCRYPTION_KEY);
+          textToShow = bytes.toString(CryptoJS.enc.Utf8);
+        } catch (e) { textToShow = ''; }
+
+        if (!textToShow) textToShow = rawText;
+
+        const isMine = (senderName === currentUser);
+        const bubble = document.createElement('div');
+        bubble.className = `msg-bubble ${senderName === 'Eric' ? 'msg-eric' : 'msg-olga'}`;
+        
+        const timeFormatted = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const ticks = isMine ? '<span class="ticks">✓✓</span>' : '<span class="ticks">✓</span>';
+
+        bubble.innerHTML = `
+          <div>${textToShow}</div>
+          <div class="msg-info">
+            <span>${timeFormatted}</span>
+            ${ticks}
+          </div>
+        `;
+        box.appendChild(bubble);
+      });
+
+      const container = document.getElementById('chat-box-container');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function formatDateSeparator(date) {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
+      if (date.toDateString() === yesterday.toDateString()) return "Hier";
+      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    }
+
+    function onMessageInput() {
+      const text = document.getElementById('chat-msg').value;
+      const attachBtn = document.getElementById('attach-btn');
+      attachBtn.innerText = text.trim().length > 0 ? "📎" : "+";
+    }
+
+    function toggleAttachmentMenu() {
+      openCreateCardModal();
+    }
+
+    function sendMsg() {
+      const input = document.getElementById('chat-msg');
+      if (!input.value.trim() && !selectedCardToAttach) return;
+
+      let textToSend = input.value.trim();
+
+      if (selectedCardToAttach) {
+        textToSend = `💌 [Carte cadeau : ${selectedCardToAttach.icon || '🌹'} ${selectedCardToAttach.title}] ${textToSend}`;
       }
-    });
 
-    socket.on('history', (messages) => {
-      renderChatHistory(messages);
-    });
+      const encrypted = CryptoJS.AES.encrypt(textToSend, ENCRYPTION_KEY).toString();
+      
+      socket.emit('chat message', {
+        sender: currentUser,
+        user: currentUser,
+        message: encrypted,
+        text: encrypted
+      });
 
-    socket.on('chat message', () => {
-      socket.emit('request history');
-    });
+      input.value = '';
+      removeAttachment();
+      onMessageInput();
+    }
 
-    socket.on('connect_error', () => {
-      updateStatusDots('red', 'red', 'Erreur réseau');
-    });
-  }
+    /* CHARGEMENT DIRECT DES CARTES DEPUIS NETLIFY */
+    async function loadCards() {
+      try {
+        const res = await fetch('/.netlify/functions/cards');
+        if (!res.ok) return;
+        const data = await res.json();
+        localCards = Array.isArray(data) ? data : (data.cards || []);
+        renderCards();
+      } catch (err) {
+        console.error("Erreur chargement cartes Netlify:", err);
+      }
+    }
 
-  /* Rendu Messagerie & Horodatage */
-  function renderChatHistory(messages) {
-    const box = document.getElementById('chat-box');
-    box.innerHTML = '';
-    let lastDateStr = '';
+    function renderCards() {
+      const container = document.getElementById('cards-container');
+      if (!container) return;
+      container.innerHTML = '';
 
-    messages.forEach(m => {
-      const msgDate = new Date(m.timestamp || Date.now());
-      const dateStr = formatDateSeparator(msgDate);
-
-      if (dateStr !== lastDateStr) {
-        const sep = document.createElement('div');
-        sep.className = 'date-separator';
-        sep.innerText = dateStr;
-        box.appendChild(sep);
-        lastDateStr = dateStr;
+      if (!localCards || localCards.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem; margin-top:20px;">Aucune carte pour le moment.</p>';
+        return;
       }
 
-      const senderName = m.sender || m.user || 'Inconnu';
-      const rawText = m.message || m.text || '';
-      let textToShow = '';
+      localCards.forEach(c => {
+        const isMine = c.sender === currentUser;
+        const wrapper = document.createElement('div');
+        wrapper.className = `card-item-wrapper ${isMine ? 'sent' : 'received'}`;
+
+        wrapper.innerHTML = `
+          <div class="card-item ${c.is_redeemed ? 'redeemed' : ''}">
+            <div style="font-size:1.6rem; margin-bottom:4px;">${c.icon || '🌹'}</div>
+            <div style="font-weight:700; font-size:0.95rem;">${c.title}</div>
+            <div style="font-size:0.8rem; color:var(--text-light); margin-top:2px;">${c.description || ''}</div>
+            <div style="font-size:0.7rem; color:var(--text-light); margin-top:6px;">
+              De <strong>${c.sender}</strong> pour <strong>${c.recipient}</strong>
+            </div>
+            ${!c.is_redeemed && !isMine ? `<button class="btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
+            ${c.is_redeemed ? `<div style="font-size:0.75rem; color:#888; margin-top:6px;">Utilisée ❤️</div>` : ''}
+          </div>
+        `;
+        container.appendChild(wrapper);
+      });
+    }
+
+    function openCreateCardModal() {
+      document.getElementById('card-modal').classList.remove('hidden');
+    }
+
+    function closeCreateCardModal() {
+      document.getElementById('card-modal').classList.add('hidden');
+    }
+
+    async function submitCardModal() {
+      const icon = document.getElementById('modal-card-icon').value.trim() || '🌹';
+      const title = document.getElementById('modal-card-title').value.trim();
+      const description = document.getElementById('modal-card-desc').value.trim();
+
+      if (!title) return alert("Veuillez entrer un titre");
 
       try {
-        const bytes = CryptoJS.AES.decrypt(rawText, ENCRYPTION_KEY);
-        textToShow = bytes.toString(CryptoJS.enc.Utf8);
-      } catch (e) { textToShow = ''; }
+        const res = await fetch('/.netlify/functions/cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            description,
+            icon,
+            sender: currentUser,
+            recipient: partnerUser
+          })
+        });
 
-      if (!textToShow) textToShow = rawText;
+        if (res.ok) {
+          const newCard = await res.json();
+          closeCreateCardModal();
+          await loadCards();
 
-      const isMine = (senderName === currentUser);
-      const bubble = document.createElement('div');
-      bubble.className = `msg-bubble ${senderName === 'Eric' ? 'msg-eric' : 'msg-olga'}`;
-      
-      const timeFormatted = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const ticks = isMine ? '<span class="ticks">✓✓</span>' : '<span class="ticks">✓</span>';
-
-      bubble.innerHTML = `
-        <div>${textToShow}</div>
-        <div class="msg-info">
-          <span>${timeFormatted}</span>
-          ${ticks}
-        </div>
-      `;
-      box.appendChild(bubble);
-    });
-
-    const container = document.getElementById('chat-box-container');
-    container.scrollTop = container.scrollHeight;
-  }
-
-  function formatDateSeparator(date) {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
-    if (date.toDateString() === yesterday.toDateString()) return "Hier";
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-  }
-
-  function onMessageInput() {
-    const text = document.getElementById('chat-msg').value;
-    const attachBtn = document.getElementById('attach-btn');
-    attachBtn.innerText = text.trim().length > 0 ? "📎" : "+";
-  }
-
-  function toggleAttachmentMenu() {
-    openCreateCardModal();
-  }
-
-  function sendMsg() {
-    const input = document.getElementById('chat-msg');
-    if (!input.value.trim() && !selectedCardToAttach) return;
-
-    let textToSend = input.value.trim();
-
-    // Si une carte est sélectionnée, on l'ajoute au texte du message
-    if (selectedCardToAttach) {
-      textToSend = `💌 [Carte cadeau : ${selectedCardToAttach.icon || '🌹'} ${selectedCardToAttach.title}] ${textToSend}`;
-    }
-
-    const encrypted = CryptoJS.AES.encrypt(textToSend, ENCRYPTION_KEY).toString();
-    
-    // Contrat Socket.io standard de sc (sans modification backend)
-    socket.emit('chat message', {
-      sender: currentUser,
-      user: currentUser,
-      message: encrypted,
-      text: encrypted
-    });
-
-    input.value = '';
-    removeAttachment();
-    onMessageInput();
-  }
-
-  /* Gestion des Cartes via Netlify Functions */
-  async function loadCards() {
-    try {
-      const res = await fetch('/.netlify/functions/cards');
-      if (!res.ok) return;
-      localCards = await res.json();
-      renderCards();
-    } catch (err) {
-      console.error("Erreur chargement cartes:", err);
-    }
-  }
-
-  function renderCards() {
-    const container = document.getElementById('cards-container');
-    container.innerHTML = '';
-
-    if (!localCards || localCards.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem; margin-top:20px;">Aucune carte pour le moment.</p>';
-      return;
-    }
-
-    localCards.forEach(c => {
-      const isMine = c.sender === currentUser;
-      const wrapper = document.createElement('div');
-      wrapper.className = `card-item-wrapper ${isMine ? 'sent' : 'received'}`;
-
-      wrapper.innerHTML = `
-        <div class="card-item ${c.is_redeemed ? 'redeemed' : ''}">
-          <div style="font-size:1.6rem; margin-bottom:4px;">${c.icon || '🌹'}</div>
-          <div style="font-weight:700; font-size:0.95rem;">${c.title}</div>
-          <div style="font-size:0.8rem; color:var(--text-light); margin-top:2px;">${c.description || ''}</div>
-          <div style="font-size:0.7rem; color:var(--text-light); margin-top:6px;">
-            De <strong>${c.sender}</strong> pour <strong>${c.recipient}</strong>
-          </div>
-          ${!c.is_redeemed && !isMine ? `<button class="btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
-          ${c.is_redeemed ? `<div style="font-size:0.75rem; color:#888; margin-top:6px;">Utilisée ❤️</div>` : ''}
-        </div>
-      `;
-      container.appendChild(wrapper);
-    });
-  }
-
-  function openCreateCardModal() {
-    document.getElementById('card-modal').classList.remove('hidden');
-  }
-
-  function closeCreateCardModal() {
-    document.getElementById('card-modal').classList.add('hidden');
-  }
-
-  async function submitCardModal() {
-    const icon = document.getElementById('modal-card-icon').value.trim() || '🌹';
-    const title = document.getElementById('modal-card-title').value.trim();
-    const description = document.getElementById('modal-card-desc').value.trim();
-
-    if (!title) return alert("Veuillez entrer un titre");
-
-    try {
-      const res = await fetch('/.netlify/functions/cards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description,
-          icon,
-          sender: currentUser,
-          recipient: partnerUser
-        })
-      });
-
-      if (res.ok) {
-        const newCard = await res.json();
-        closeCreateCardModal();
-        await loadCards();
-
-        // Option d'envoi immédiat comme pièce jointe dans le tchat
-        selectedCardToAttach = newCard;
-        document.getElementById('preview-card-title').innerText = `${newCard.icon || '🌹'} ${newCard.title}`;
-        document.getElementById('attachment-preview').classList.remove('hidden');
+          selectedCardToAttach = newCard;
+          document.getElementById('preview-card-title').innerText = `${newCard.icon || '🌹'} ${newCard.title}`;
+          document.getElementById('attachment-preview').classList.remove('hidden');
+        }
+      } catch (err) {
+        alert("Erreur lors de la création de la carte.");
       }
-    } catch (err) {
-      alert("Erreur lors de la création de la carte.");
     }
-  }
 
-  function removeAttachment() {
-    selectedCardToAttach = null;
-    document.getElementById('attachment-preview').classList.add('hidden');
-  }
-
-  async function redeemCard(id) {
-    if (!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
-    try {
-      await fetch('/.netlify/functions/cards', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      });
-      loadCards();
-    } catch (err) {
-      console.error(err);
+    function removeAttachment() {
+      selectedCardToAttach = null;
+      document.getElementById('attachment-preview').classList.add('hidden');
     }
-  }
 
-  function updateStatusDots(dot1Color, dot2Color, text) {
-    document.getElementById('dot-me').className = `dot ${dot1Color}`;
-    document.getElementById('dot-partner').className = `dot ${dot2Color}`;
-    document.getElementById('status-text').innerText = text;
-  }
-
-  function switchTab(tabName) {
-    document.getElementById('tab-btn-chat').classList.remove('active');
-    document.getElementById('tab-btn-cards').classList.remove('active');
-    document.getElementById('section-chat').classList.add('hidden');
-    document.getElementById('section-cards').classList.add('hidden');
-
-    if (tabName === 'chat') {
-      document.getElementById('tab-btn-chat').classList.add('active');
-      document.getElementById('section-chat').classList.remove('hidden');
-    } else {
-      document.getElementById('tab-btn-cards').classList.add('active');
-      document.getElementById('section-cards').classList.remove('hidden');
-      loadCards();
+    async function redeemCard(id) {
+      if (!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
+      try {
+        await fetch('/.netlify/functions/cards', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        loadCards();
+      } catch (err) {
+        console.error(err);
+      }
     }
-  }
-</script>
-  
+
+    function updateStatusDots(dot1Color, dot2Color, text) {
+      document.getElementById('dot-me').className = `dot ${dot1Color}`;
+      document.getElementById('dot-partner').className = `dot ${dot2Color}`;
+      document.getElementById('status-text').innerText = text;
+    }
+
+    function switchTab(tabName) {
+      document.getElementById('tab-btn-chat').classList.remove('active');
+      document.getElementById('tab-btn-cards').classList.remove('active');
+      document.getElementById('section-chat').classList.add('hidden');
+      document.getElementById('section-cards').classList.add('hidden');
+
+      if (tabName === 'chat') {
+        document.getElementById('tab-btn-chat').classList.add('active');
+        document.getElementById('section-chat').classList.remove('hidden');
+      } else {
+        document.getElementById('tab-btn-cards').classList.add('active');
+        document.getElementById('section-cards').classList.remove('hidden');
+        loadCards();
+      }
+    }
+
+    // Destruction dynamique de tout badge Netlify injecté
+    const removeNetlifyBadge = () => {
+      const elements = document.querySelectorAll('[class*="netlify"], [id*="netlify"], netlify-drawer');
+      elements.forEach(el => el.remove());
+    };
+    observer = new MutationObserver(removeNetlifyBadge);
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('DOMContentLoaded', removeNetlifyBadge);
+  </script>
 </body>
 </html>
+
