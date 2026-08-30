@@ -733,6 +733,16 @@ iframe[src*="netlify"] {
       .catch((err) => console.error('Échec de l\'enregistrement du Service Worker :', err));
   });
 }
+// Suppression automatique des éléments Netlify injectés
+const removeNetlifyBadge = () => {
+  const elements = document.querySelectorAll('[class*="netlify"], [id*="netlify"], netlify-drawer');
+  elements.forEach(el => el.remove());
+};
+
+// Exécution immédiate et surveillance du DOM
+observer = new MutationObserver(removeNetlifyBadge);
+observer.observe(document.body, { childList: true, subtree: true });
+window.addEventListener('DOMContentLoaded', removeNetlifyBadge);
 
   </script>
   
