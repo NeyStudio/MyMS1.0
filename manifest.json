@@ -1,0 +1,23 @@
+{
+  "name": "B12-B10",
+  "short_name": "B12-B10",
+  "description": "Convertir, pourquoi pas ?",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#3498db",
+  "theme_color": "#3498db",
+  "icons": [
+   {
+    "purpose": "maskable",
+    "sizes": "192x192",
+    "src": "icon-192x192.png",
+    "type": "image/png"
+
+   } ,
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
