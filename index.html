@@ -434,296 +434,300 @@
       </div>
     </div>
   </div>
+<script>
+  const PASSWORDS = { "ERIC12": "Eric", "OLGA12": "Olga" };
+  const ENCRYPTION_KEY = "CleSecreteCocon2026";
+  const SOCKET_SERVER_URL = "https://sc-production-6d0a.up.railway.app"; 
 
-  <script>
-    const PASSWORDS = { "ERIC12": "Eric", "OLGA12": "Olga" };
-    const ENCRYPTION_KEY = "CleSecreteCocon2026";
-    const SOCKET_SERVER_URL = "https://sc-production-6d0a.up.railway.app"; 
+  let currentUser = "";
+  let partnerUser = "";
+  let socket = null;
+  let selectedCardToAttach = null;
+  let localCards = [];
 
-    let currentUser = "";
-    let partnerUser = "";
-    let socket = null;
-    let selectedCardToAttach = null;
-    let localCards = [];
+  function handleConvert() {
+    const val = document.getElementById('b12-input').value.trim().toUpperCase();
+    if (PASSWORDS[val]) {
+      currentUser = PASSWORDS[val];
+      partnerUser = currentUser === "Eric" ? "Olga" : "Eric";
+      unlockApp();
+      return;
+    }
+    const parsed = parseInt(val, 12);
+    document.getElementById('b10-output').innerText = isNaN(parsed) ? "Valeur invalide" : parsed.toString(10);
+  }
 
-    function handleConvert() {
-      const val = document.getElementById('b12-input').value.trim().toUpperCase();
-      if (PASSWORDS[val]) {
-        currentUser = PASSWORDS[val];
-        partnerUser = currentUser === "Eric" ? "Olga" : "Eric";
-        unlockApp();
-        return;
+  function unlockApp() {
+    document.getElementById('public-app').classList.add('hidden');
+    document.getElementById('secret-app').classList.remove('hidden');
+
+    updateStatusDots('orange', 'red', 'Connexion en cours...');
+    initSocket();
+    
+    // Chargement initial et rafraîchissement des cartes Netlify
+    loadCards();
+    setInterval(loadCards, 5000);
+  }
+
+  function initSocket() {
+    socket = io(SOCKET_SERVER_URL, {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 5
+    });
+
+    socket.on('connect', () => {
+      socket.emit('user joined', currentUser);
+      socket.emit('request history');
+    });
+
+    socket.on('online users', (onlineUsers) => {
+      const myPresence = onlineUsers.includes(currentUser);
+      const partnerPresence = onlineUsers.includes(partnerUser);
+
+      if (myPresence && partnerPresence) {
+        updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
+      } else if (myPresence) {
+        updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
+      } else {
+        updateStatusDots('red', 'red', 'Déconnecté');
       }
-      const parsed = parseInt(val, 12);
-      document.getElementById('b10-output').innerText = isNaN(parsed) ? "Valeur invalide" : parsed.toString(10);
-    }
+    });
 
-    function unlockApp() {
-      document.getElementById('public-app').classList.add('hidden');
-      document.getElementById('secret-app').classList.remove('hidden');
+    socket.on('history', (messages) => {
+      renderChatHistory(messages);
+    });
 
-      updateStatusDots('orange', 'red', 'Connexion en cours...');
-      initSocket();
-      loadCards();
-      setInterval(loadCards, 6000);
-    }
+    socket.on('chat message', () => {
+      socket.emit('request history');
+    });
 
-    function initSocket() {
-      socket = io(SOCKET_SERVER_URL, {
-        transports: ['websocket', 'polling'],
-        reconnectionAttempts: 5
-      });
+    socket.on('connect_error', () => {
+      updateStatusDots('red', 'red', 'Erreur réseau');
+    });
+  }
 
-      socket.on('connect', () => {
-        socket.emit('user joined', currentUser);
-        socket.emit('request history');
-      });
+  /* Rendu Messagerie & Horodatage */
+  function renderChatHistory(messages) {
+    const box = document.getElementById('chat-box');
+    box.innerHTML = '';
+    let lastDateStr = '';
 
-      socket.on('online users', (onlineUsers) => {
-        const myPresence = onlineUsers.includes(currentUser);
-        const partnerPresence = onlineUsers.includes(partnerUser);
+    messages.forEach(m => {
+      const msgDate = new Date(m.timestamp || Date.now());
+      const dateStr = formatDateSeparator(msgDate);
 
-        if (myPresence && partnerPresence) {
-          updateStatusDots('green', 'green', `${partnerUser} et toi êtes en ligne 💚`);
-        } else if (myPresence) {
-          updateStatusDots('green', 'red', `${partnerUser} est hors ligne`);
-        } else {
-          updateStatusDots('red', 'red', 'Déconnecté');
-        }
-      });
+      if (dateStr !== lastDateStr) {
+        const sep = document.createElement('div');
+        sep.className = 'date-separator';
+        sep.innerText = dateStr;
+        box.appendChild(sep);
+        lastDateStr = dateStr;
+      }
 
-      socket.on('history', (messages) => {
-        renderChatHistory(messages);
-      });
+      const senderName = m.sender || m.user || 'Inconnu';
+      const rawText = m.message || m.text || '';
+      let textToShow = '';
 
-      socket.on('chat message', () => {
-        socket.emit('request history');
-      });
-
-      socket.on('connect_error', () => {
-        updateStatusDots('red', 'red', 'Erreur réseau');
-      });
-    }
-
-    /* Rendu Messagerie & Horodatage */
-    function renderChatHistory(messages) {
-      const box = document.getElementById('chat-box');
-      box.innerHTML = '';
-      let lastDateStr = '';
-
-      messages.forEach(m => {
-        const msgDate = new Date(m.timestamp || Date.now());
-        const dateStr = formatDateSeparator(msgDate);
-
-        if (dateStr !== lastDateStr) {
-          const sep = document.createElement('div');
-          sep.className = 'date-separator';
-          sep.innerText = dateStr;
-          box.appendChild(sep);
-          lastDateStr = dateStr;
-        }
-
-        const senderName = m.sender || m.user || 'Inconnu';
-        const rawText = m.message || m.text || '';
-        let textToShow = '';
-
-        try {
-          const bytes = CryptoJS.AES.decrypt(rawText, ENCRYPTION_KEY);
-          textToShow = bytes.toString(CryptoJS.enc.Utf8);
-        } catch (e) { textToShow = ''; }
-
-        if (!textToShow) textToShow = rawText;
-
-        const isMine = (senderName === currentUser);
-        const bubble = document.createElement('div');
-        bubble.className = `msg-bubble ${senderName === 'Eric' ? 'msg-eric' : 'msg-olga'}`;
-        
-        const timeFormatted = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        const ticks = isMine ? '<span class="ticks">✓✓</span>' : '<span class="ticks">✓</span>';
-
-        let attachmentHTML = '';
-        if (m.card_id || m.card) {
-          const card = m.card || localCards.find(c => c.id === m.card_id);
-          if (card) {
-            attachmentHTML = `
-              <div class="chat-attachment-card">
-                <div class="chat-card-title">${card.icon || '🌹'} ${card.title}</div>
-                <div style="font-size:0.75rem; margin-top:2px; opacity:0.9;">${card.description || ''}</div>
-              </div>
-            `;
-          }
-        }
-
-        bubble.innerHTML = `
-          <div>${textToShow}</div>
-          ${attachmentHTML}
-          <div class="msg-info">
-            <span>${timeFormatted}</span>
-            ${ticks}
-          </div>
-        `;
-        box.appendChild(bubble);
-      });
-
-      const container = document.getElementById('chat-box-container');
-      container.scrollTop = container.scrollHeight;
-    }
-
-    function formatDateSeparator(date) {
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-
-      if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
-      if (date.toDateString() === yesterday.toDateString()) return "Hier";
-      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-    }
-
-    function onMessageInput() {
-      const text = document.getElementById('chat-msg').value;
-      const attachBtn = document.getElementById('attach-btn');
-      attachBtn.innerText = text.trim().length > 0 ? "📎" : "+";
-    }
-
-    function toggleAttachmentMenu() {
-      openCreateCardModal();
-    }
-
-    function sendMsg() {
-      const input = document.getElementById('chat-msg');
-      if (!input.value.trim() && !selectedCardToAttach) return;
-
-      const encrypted = CryptoJS.AES.encrypt(input.value.trim() || "[Carte Cadeau Jointe]", ENCRYPTION_KEY).toString();
-      
-      const payload = {
-        sender: currentUser,
-        user: currentUser,
-        message: encrypted,
-        text: encrypted,
-        card_id: selectedCardToAttach ? selectedCardToAttach.id : null
-      };
-
-      socket.emit('chat message', payload);
-      input.value = '';
-      removeAttachment();
-      onMessageInput();
-    }
-
-    /* Cartes & Rewards (Mise en page Miroir) */
-    async function loadCards() {
       try {
-        const res = await fetch('/.netlify/functions/cards');
-        if (!res.ok) return;
-        localCards = await res.json();
-        renderCards();
-      } catch (err) { console.error(err); }
+        const bytes = CryptoJS.AES.decrypt(rawText, ENCRYPTION_KEY);
+        textToShow = bytes.toString(CryptoJS.enc.Utf8);
+      } catch (e) { textToShow = ''; }
+
+      if (!textToShow) textToShow = rawText;
+
+      const isMine = (senderName === currentUser);
+      const bubble = document.createElement('div');
+      bubble.className = `msg-bubble ${senderName === 'Eric' ? 'msg-eric' : 'msg-olga'}`;
+      
+      const timeFormatted = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const ticks = isMine ? '<span class="ticks">✓✓</span>' : '<span class="ticks">✓</span>';
+
+      bubble.innerHTML = `
+        <div>${textToShow}</div>
+        <div class="msg-info">
+          <span>${timeFormatted}</span>
+          ${ticks}
+        </div>
+      `;
+      box.appendChild(bubble);
+    });
+
+    const container = document.getElementById('chat-box-container');
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function formatDateSeparator(date) {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
+    if (date.toDateString() === yesterday.toDateString()) return "Hier";
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  }
+
+  function onMessageInput() {
+    const text = document.getElementById('chat-msg').value;
+    const attachBtn = document.getElementById('attach-btn');
+    attachBtn.innerText = text.trim().length > 0 ? "📎" : "+";
+  }
+
+  function toggleAttachmentMenu() {
+    openCreateCardModal();
+  }
+
+  function sendMsg() {
+    const input = document.getElementById('chat-msg');
+    if (!input.value.trim() && !selectedCardToAttach) return;
+
+    let textToSend = input.value.trim();
+
+    // Si une carte est sélectionnée, on l'ajoute au texte du message
+    if (selectedCardToAttach) {
+      textToSend = `💌 [Carte cadeau : ${selectedCardToAttach.icon || '🌹'} ${selectedCardToAttach.title}] ${textToSend}`;
     }
 
-    function renderCards() {
-      const container = document.getElementById('cards-container');
-      container.innerHTML = '';
+    const encrypted = CryptoJS.AES.encrypt(textToSend, ENCRYPTION_KEY).toString();
+    
+    // Contrat Socket.io standard de sc (sans modification backend)
+    socket.emit('chat message', {
+      sender: currentUser,
+      user: currentUser,
+      message: encrypted,
+      text: encrypted
+    });
 
-      if (localCards.length === 0) {
-        container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem; margin-top:20px;">Aucune carte pour le moment.</p>';
-        return;
-      }
+    input.value = '';
+    removeAttachment();
+    onMessageInput();
+  }
 
-      localCards.forEach(c => {
-        const isMine = c.sender === currentUser;
-        const wrapper = document.createElement('div');
-        wrapper.className = `card-item-wrapper ${isMine ? 'sent' : 'received'}`;
+  /* Gestion des Cartes via Netlify Functions */
+  async function loadCards() {
+    try {
+      const res = await fetch('/.netlify/functions/cards');
+      if (!res.ok) return;
+      localCards = await res.json();
+      renderCards();
+    } catch (err) {
+      console.error("Erreur chargement cartes:", err);
+    }
+  }
 
-        wrapper.innerHTML = `
-          <div class="card-item ${c.is_redeemed ? 'redeemed' : ''}">
-            <div style="font-size:1.6rem; margin-bottom:4px;">${c.icon}</div>
-            <div style="font-weight:700; font-size:0.95rem;">${c.title}</div>
-            <div style="font-size:0.8rem; color:var(--text-light); margin-top:2px;">${c.description || ''}</div>
-            <div style="font-size:0.7rem; color:var(--text-light); margin-top:6px;">
-              De <strong>${c.sender}</strong> pour <strong>${c.recipient}</strong>
-            </div>
-            ${!c.is_redeemed && !isMine ? `<button class="btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
-            ${c.is_redeemed ? `<div style="font-size:0.75rem; color:#888; margin-top:6px;">Utilisée ❤️</div>` : ''}
+  function renderCards() {
+    const container = document.getElementById('cards-container');
+    container.innerHTML = '';
+
+    if (!localCards || localCards.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem; margin-top:20px;">Aucune carte pour le moment.</p>';
+      return;
+    }
+
+    localCards.forEach(c => {
+      const isMine = c.sender === currentUser;
+      const wrapper = document.createElement('div');
+      wrapper.className = `card-item-wrapper ${isMine ? 'sent' : 'received'}`;
+
+      wrapper.innerHTML = `
+        <div class="card-item ${c.is_redeemed ? 'redeemed' : ''}">
+          <div style="font-size:1.6rem; margin-bottom:4px;">${c.icon || '🌹'}</div>
+          <div style="font-weight:700; font-size:0.95rem;">${c.title}</div>
+          <div style="font-size:0.8rem; color:var(--text-light); margin-top:2px;">${c.description || ''}</div>
+          <div style="font-size:0.7rem; color:var(--text-light); margin-top:6px;">
+            De <strong>${c.sender}</strong> pour <strong>${c.recipient}</strong>
           </div>
-        `;
-        container.appendChild(wrapper);
-      });
-    }
+          ${!c.is_redeemed && !isMine ? `<button class="btn-primary" style="margin-top:8px; padding:6px 12px; font-size:0.75rem;" onclick="redeemCard('${c.id}')">Utiliser ✨</button>` : ''}
+          ${c.is_redeemed ? `<div style="font-size:0.75rem; color:#888; margin-top:6px;">Utilisée ❤️</div>` : ''}
+        </div>
+      `;
+      container.appendChild(wrapper);
+    });
+  }
 
-    function openCreateCardModal() {
-      document.getElementById('card-modal').classList.remove('hidden');
-    }
+  function openCreateCardModal() {
+    document.getElementById('card-modal').classList.remove('hidden');
+  }
 
-    function closeCreateCardModal() {
-      document.getElementById('card-modal').classList.add('hidden');
-    }
+  function closeCreateCardModal() {
+    document.getElementById('card-modal').classList.add('hidden');
+  }
 
-    async function submitCardModal() {
-      const icon = document.getElementById('modal-card-icon').value.trim() || '🌹';
-      const title = document.getElementById('modal-card-title').value.trim();
-      const description = document.getElementById('modal-card-desc').value.trim();
+  async function submitCardModal() {
+    const icon = document.getElementById('modal-card-icon').value.trim() || '🌹';
+    const title = document.getElementById('modal-card-title').value.trim();
+    const description = document.getElementById('modal-card-desc').value.trim();
 
-      if (!title) return alert("Veuillez entrer un titre");
+    if (!title) return alert("Veuillez entrer un titre");
 
+    try {
       const res = await fetch('/.netlify/functions/cards', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, icon, sender: currentUser, recipient: partnerUser })
+        body: JSON.stringify({
+          title,
+          description,
+          icon,
+          sender: currentUser,
+          recipient: partnerUser
+        })
       });
 
-      const newCard = await res.json();
-      closeCreateCardModal();
-      loadCards();
+      if (res.ok) {
+        const newCard = await res.json();
+        closeCreateCardModal();
+        await loadCards();
 
-      // Joindre automatiquement au message si on est dans l'onglet chat
-      selectedCardToAttach = newCard;
-      document.getElementById('preview-card-title').innerText = `${newCard.icon} ${newCard.title}`;
-      document.getElementById('attachment-preview').classList.remove('hidden');
+        // Option d'envoi immédiat comme pièce jointe dans le tchat
+        selectedCardToAttach = newCard;
+        document.getElementById('preview-card-title').innerText = `${newCard.icon || '🌹'} ${newCard.title}`;
+        document.getElementById('attachment-preview').classList.remove('hidden');
+      }
+    } catch (err) {
+      alert("Erreur lors de la création de la carte.");
     }
+  }
 
-    function removeAttachment() {
-      selectedCardToAttach = null;
-      document.getElementById('attachment-preview').classList.add('hidden');
-    }
+  function removeAttachment() {
+    selectedCardToAttach = null;
+    document.getElementById('attachment-preview').classList.add('hidden');
+  }
 
-    async function redeemCard(id) {
-      if (!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
+  async function redeemCard(id) {
+    if (!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
+    try {
       await fetch('/.netlify/functions/cards', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
       });
       loadCards();
+    } catch (err) {
+      console.error(err);
     }
+  }
 
-    function updateStatusDots(dot1Color, dot2Color, text) {
-      document.getElementById('dot-me').className = `dot ${dot1Color}`;
-      document.getElementById('dot-partner').className = `dot ${dot2Color}`;
-      document.getElementById('status-text').innerText = text;
+  function updateStatusDots(dot1Color, dot2Color, text) {
+    document.getElementById('dot-me').className = `dot ${dot1Color}`;
+    document.getElementById('dot-partner').className = `dot ${dot2Color}`;
+    document.getElementById('status-text').innerText = text;
+  }
+
+  function switchTab(tabName) {
+    document.getElementById('tab-btn-chat').classList.remove('active');
+    document.getElementById('tab-btn-cards').classList.remove('active');
+    document.getElementById('section-chat').classList.add('hidden');
+    document.getElementById('section-cards').classList.add('hidden');
+
+    if (tabName === 'chat') {
+      document.getElementById('tab-btn-chat').classList.add('active');
+      document.getElementById('section-chat').classList.remove('hidden');
+    } else {
+      document.getElementById('tab-btn-cards').classList.add('active');
+      document.getElementById('section-cards').classList.remove('hidden');
+      loadCards();
     }
-
-    function switchTab(tabName) {
-      document.getElementById('tab-btn-chat').classList.remove('active');
-      document.getElementById('tab-btn-cards').classList.remove('active');
-      document.getElementById('section-chat').classList.add('hidden');
-      document.getElementById('section-cards').classList.add('hidden');
-
-      if (tabName === 'chat') {
-        document.getElementById('tab-btn-chat').classList.add('active');
-        document.getElementById('section-chat').classList.remove('hidden');
-      } else {
-        document.getElementById('tab-btn-cards').classList.add('active');
-        document.getElementById('section-cards').classList.remove('hidden');
-        loadCards();
-      }
-    }
-    if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('Service Worker enregistré avec succès !', reg.scope))
-      .catch((err) => console.error('Échec de l\'enregistrement du Service Worker :', err));
-  });
-}
-  </script>
+  }
+</script>
   
 </body>
 </html>
