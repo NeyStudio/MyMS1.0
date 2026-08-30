@@ -5,7 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Convertisseur Duodécimal & Mathématiques</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0F2027">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <style>
@@ -17,21 +21,6 @@
       --text-dark: #2C3E50;
       --text-light: #7F8C8D;
       --shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-    }
-
-    /* MASQUAGE DEFINITIF DU BADGE NETLIFY */
-    [data-netlify-deploy-id],
-    [class*="netlify"],
-    [id*="netlify"],
-    netlify-drawer,
-    iframe[src*="netlify"],
-    .netlify-badge {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      pointer-events: none !important;
-      height: 0 !important;
-      width: 0 !important;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -136,7 +125,7 @@
     .dot.red { background: #E53935; }
     .status-text { font-size: 0.78rem; color: var(--text-light); font-weight: 500; }
 
-    /* Navigation */
+    /* Tab Navigation */
     .nav-tabs {
       display: flex;
       gap: 6px;
@@ -224,6 +213,17 @@
 
     .ticks { font-size: 0.75rem; font-weight: bold; }
 
+    /* Attachment Card in Chat */
+    .chat-attachment-card {
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px dashed rgba(255, 255, 255, 0.8);
+      border-radius: 12px;
+      padding: 10px;
+      margin-top: 6px;
+      backdrop-filter: blur(4px);
+    }
+    .chat-card-title { font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; }
+
     /* Input Bar */
     .input-bar-container {
       padding: 12px 16px;
@@ -270,6 +270,7 @@
       justify-content: center;
     }
 
+    /* Selected Attachment Preview */
     .attachment-preview {
       background: #F7FAFC;
       border: 1px solid #E2E8F0;
@@ -281,7 +282,7 @@
       justify-content: space-between;
     }
 
-    /* Cards Layout (Mirror) */
+    /* Cards Tab (Mirror Layout) */
     .cards-container {
       display: flex;
       flex-direction: column;
@@ -354,7 +355,7 @@
 
   <div class="container">
     
-    <!-- CONVERTISSEUR -->
+    <!-- CONVERTISSEUR (Interface Publique) -->
     <div id="public-app">
       <h1>Convertisseur Duodécimal</h1>
       <p class="subtitle">Convertissez vos valeurs de la base 12 à la base 10.</p>
@@ -369,12 +370,13 @@
       </div>
     </div>
 
-    <!-- COCON -->
+    <!-- NOTRE COCON (Interface Messagerie) -->
     <div id="secret-app" class="hidden" style="height: 100%; display: flex; flex-direction: column;">
       
+      <!-- Header -->
       <div class="app-header">
         <div class="status-bar">
-          <span class="status-text" id="status-text">Connexion...</span>
+          <span class="status-text" id="status-text">Mise en connexion...</span>
           <div class="status-dots">
             <div class="dot" id="dot-me"></div>
             <div class="dot" id="dot-partner"></div>
@@ -387,15 +389,16 @@
         </div>
       </div>
 
-      <!-- Messagerie -->
+      <!-- Section Messagerie -->
       <div id="section-chat" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
         <div class="app-content" id="chat-box-container">
           <div id="chat-box"></div>
         </div>
 
+        <!-- Zone d'envoi -->
         <div class="input-bar-container">
           <div id="attachment-preview" class="attachment-preview hidden">
-            <span>Carte jointe : <strong id="preview-card-title"></strong></span>
+            <span> Carte jointe : <strong id="preview-card-title"></strong></span>
             <span style="cursor:pointer; color:#E53935;" onclick="removeAttachment()">✕</span>
           </div>
 
@@ -407,7 +410,7 @@
         </div>
       </div>
 
-      <!-- Cartes -->
+      <!-- Section Cartes & Rewards -->
       <div id="section-cards" class="app-content hidden" style="position: relative;">
         <div class="cards-container" id="cards-container"></div>
         <button class="floating-add-btn" onclick="openCreateCardModal()">+</button>
@@ -417,13 +420,13 @@
 
   </div>
 
-  <!-- Modal Création -->
+  <!-- Modal Création de Carte -->
   <div id="card-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <h3 style="font-family:'Cormorant Garamond'; font-size:1.5rem; margin-bottom:12px; text-align:center;">Offrir une carte 💌</h3>
       <input type="text" id="modal-card-icon" value="🌹" style="margin-bottom:8px;" placeholder="Emoji (ex: 🥐, 💆‍♂️)">
-      <input type="text" id="modal-card-title" placeholder="Titre (ex: Soirée restaurant)" style="margin-bottom:8px;">
-      <textarea id="modal-card-desc" rows="2" placeholder="Précision..." style="margin-bottom:12px;"></textarea>
+      <input type="text" id="modal-card-title" placeholder="Titre (ex: Massage 20 min)" style="margin-bottom:8px;">
+      <textarea id="modal-card-desc" rows="2" placeholder="Petite précision..." style="margin-bottom:12px;"></textarea>
       
       <div style="display:flex; gap:8px;">
         <button class="btn-primary" style="flex:1; background:#EDF2F7; color:#4A5568;" onclick="closeCreateCardModal()">Annuler</button>
@@ -462,7 +465,7 @@
       updateStatusDots('orange', 'red', 'Connexion en cours...');
       initSocket();
       loadCards();
-      setInterval(loadCards, 5000);
+      setInterval(loadCards, 6000);
     }
 
     function initSocket() {
@@ -502,6 +505,7 @@
       });
     }
 
+    /* Rendu Messagerie & Horodatage */
     function renderChatHistory(messages) {
       const box = document.getElementById('chat-box');
       box.innerHTML = '';
@@ -537,8 +541,22 @@
         const timeFormatted = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const ticks = isMine ? '<span class="ticks">✓✓</span>' : '<span class="ticks">✓</span>';
 
+        let attachmentHTML = '';
+        if (m.card_id || m.card) {
+          const card = m.card || localCards.find(c => c.id === m.card_id);
+          if (card) {
+            attachmentHTML = `
+              <div class="chat-attachment-card">
+                <div class="chat-card-title">${card.icon || '🌹'} ${card.title}</div>
+                <div style="font-size:0.75rem; margin-top:2px; opacity:0.9;">${card.description || ''}</div>
+              </div>
+            `;
+          }
+        }
+
         bubble.innerHTML = `
           <div>${textToShow}</div>
+          ${attachmentHTML}
           <div class="msg-info">
             <span>${timeFormatted}</span>
             ${ticks}
@@ -575,45 +593,37 @@
       const input = document.getElementById('chat-msg');
       if (!input.value.trim() && !selectedCardToAttach) return;
 
-      let textToSend = input.value.trim();
-
-      if (selectedCardToAttach) {
-        textToSend = `💌 [Carte cadeau : ${selectedCardToAttach.icon || '🌹'} ${selectedCardToAttach.title}] ${textToSend}`;
-      }
-
-      const encrypted = CryptoJS.AES.encrypt(textToSend, ENCRYPTION_KEY).toString();
+      const encrypted = CryptoJS.AES.encrypt(input.value.trim() || "[Carte Cadeau Jointe]", ENCRYPTION_KEY).toString();
       
-      socket.emit('chat message', {
+      const payload = {
         sender: currentUser,
         user: currentUser,
         message: encrypted,
-        text: encrypted
-      });
+        text: encrypted,
+        card_id: selectedCardToAttach ? selectedCardToAttach.id : null
+      };
 
+      socket.emit('chat message', payload);
       input.value = '';
       removeAttachment();
       onMessageInput();
     }
 
-    /* CHARGEMENT DIRECT DES CARTES DEPUIS NETLIFY */
+    /* Cartes & Rewards (Mise en page Miroir) */
     async function loadCards() {
       try {
         const res = await fetch('/.netlify/functions/cards');
         if (!res.ok) return;
-        const data = await res.json();
-        localCards = Array.isArray(data) ? data : (data.cards || []);
+        localCards = await res.json();
         renderCards();
-      } catch (err) {
-        console.error("Erreur chargement cartes Netlify:", err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     function renderCards() {
       const container = document.getElementById('cards-container');
-      if (!container) return;
       container.innerHTML = '';
 
-      if (!localCards || localCards.length === 0) {
+      if (localCards.length === 0) {
         container.innerHTML = '<p style="text-align:center; color: var(--text-light); font-size:0.85rem; margin-top:20px;">Aucune carte pour le moment.</p>';
         return;
       }
@@ -625,7 +635,7 @@
 
         wrapper.innerHTML = `
           <div class="card-item ${c.is_redeemed ? 'redeemed' : ''}">
-            <div style="font-size:1.6rem; margin-bottom:4px;">${c.icon || '🌹'}</div>
+            <div style="font-size:1.6rem; margin-bottom:4px;">${c.icon}</div>
             <div style="font-weight:700; font-size:0.95rem;">${c.title}</div>
             <div style="font-size:0.8rem; color:var(--text-light); margin-top:2px;">${c.description || ''}</div>
             <div style="font-size:0.7rem; color:var(--text-light); margin-top:6px;">
@@ -654,31 +664,20 @@
 
       if (!title) return alert("Veuillez entrer un titre");
 
-      try {
-        const res = await fetch('/.netlify/functions/cards', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title,
-            description,
-            icon,
-            sender: currentUser,
-            recipient: partnerUser
-          })
-        });
+      const res = await fetch('/.netlify/functions/cards', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, icon, sender: currentUser, recipient: partnerUser })
+      });
 
-        if (res.ok) {
-          const newCard = await res.json();
-          closeCreateCardModal();
-          await loadCards();
+      const newCard = await res.json();
+      closeCreateCardModal();
+      loadCards();
 
-          selectedCardToAttach = newCard;
-          document.getElementById('preview-card-title').innerText = `${newCard.icon || '🌹'} ${newCard.title}`;
-          document.getElementById('attachment-preview').classList.remove('hidden');
-        }
-      } catch (err) {
-        alert("Erreur lors de la création de la carte.");
-      }
+      // Joindre automatiquement au message si on est dans l'onglet chat
+      selectedCardToAttach = newCard;
+      document.getElementById('preview-card-title').innerText = `${newCard.icon} ${newCard.title}`;
+      document.getElementById('attachment-preview').classList.remove('hidden');
     }
 
     function removeAttachment() {
@@ -688,16 +687,12 @@
 
     async function redeemCard(id) {
       if (!confirm("Veux-tu utiliser cette carte maintenant ? 🥰")) return;
-      try {
-        await fetch('/.netlify/functions/cards', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
-        });
-        loadCards();
-      } catch (err) {
-        console.error(err);
-      }
+      await fetch('/.netlify/functions/cards', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      loadCards();
     }
 
     function updateStatusDots(dot1Color, dot2Color, text) {
@@ -721,16 +716,15 @@
         loadCards();
       }
     }
+    if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => console.log('Service Worker enregistré avec succès !', reg.scope))
+      .catch((err) => console.error('Échec de l\'enregistrement du Service Worker :', err));
+  });
+}
 
-    // Destruction dynamique de tout badge Netlify injecté
-    const removeNetlifyBadge = () => {
-      const elements = document.querySelectorAll('[class*="netlify"], [id*="netlify"], netlify-drawer');
-      elements.forEach(el => el.remove());
-    };
-    observer = new MutationObserver(removeNetlifyBadge);
-    observer.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener('DOMContentLoaded', removeNetlifyBadge);
   </script>
+  
 </body>
-</html>
-
+  </html>
