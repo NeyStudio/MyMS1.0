@@ -13,7 +13,6 @@
       --bg-gradient: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 70%, #93F9B9 100%);
       --card-bg: rgba(255, 255, 255, 0.92);
       
-      /* Vrai Bleu Marine dégradé pour Eric */
       --eric-gradient: linear-gradient(135deg, #020024 0%, #090979 60%, #002147 100%);
       --olga-gradient: linear-gradient(135deg, #FF758C 0%, #FF7EB3 50%, #D81B60 100%);
       
@@ -51,13 +50,16 @@
     input, textarea {
       width: 100%; padding: 14px 16px; border: 1.5px solid #E2E8F0; border-radius: 12px;
       background: #FFF; color: var(--text-dark); font-family: inherit; font-size: 0.95rem; outline: none;
+      transition: all 0.2s ease;
     }
 
     button.btn-primary {
       width: 100%; padding: 14px; border: none; border-radius: 12px;
       background: linear-gradient(135deg, #090979 0%, #FF758C 100%); color: white;
       font-weight: 600; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
+    button.btn-primary:active { transform: scale(0.98); }
 
     .hidden { display: none !important; }
 
@@ -71,10 +73,13 @@
     .status-text { font-size: 0.78rem; color: var(--text-light); font-weight: 500; }
 
     .nav-tabs { display: flex; gap: 6px; background: #EDF2F7; padding: 4px; border-radius: 14px; }
-    .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent; color: var(--text-light); font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+    .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent; color: var(--text-light); font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; }
     .tab-btn.active { background: #FFF; color: #090979; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
 
-    .app-content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; position: relative; }
+    .app-content {
+      flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; position: relative;
+      scroll-behavior: smooth;
+    }
     .date-separator { align-self: center; background: #E2E8F0; color: #4A5568; font-size: 0.72rem; font-weight: 600; padding: 4px 12px; border-radius: 12px; margin: 12px 0; text-transform: uppercase; letter-spacing: 0.5px; }
 
     #chat-box { display: flex; flex-direction: column; gap: 10px; }
@@ -91,6 +96,37 @@
     .msg-bubble.sender-eric { background: var(--eric-gradient); }
     .msg-bubble.sender-olga { background: var(--olga-gradient); }
 
+    /* Animation Bulle "... qui flottent" */
+    .typing-bubble {
+      align-self: flex-start;
+      padding: 10px 16px;
+      border-radius: 18px;
+      border-bottom-left-radius: 4px;
+      background: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 6px;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #7F8C8D;
+      animation: typingFloat 1.4s infinite ease-in-out;
+    }
+
+    .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingFloat {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-6px); opacity: 1; }
+    }
+
     .reply-preview-box {
       background: rgba(255, 255, 255, 0.2); border-left: 3px solid #FFF;
       padding: 4px 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.78rem; opacity: 0.9;
@@ -102,27 +138,32 @@
     }
     .ticks { font-size: 0.72rem; letter-spacing: -2px; color: rgba(255, 255, 255, 0.85); margin-left: 2px; }
 
-    /* Bouton Flottant Défilement Bas */
+    /* Bouton Flottant Défilement Bas Attrayant */
     .scroll-down-btn {
-      position: absolute; bottom: 80px; right: 20px;
-      width: 40px; height: 40px; border-radius: 50%;
-      background: #FFFFFF; color: #090979; border: none;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      position: absolute; bottom: 84px; right: 20px;
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #FFFFFF; color: #090979; border: 1px solid #E2E8F0;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; cursor: pointer; z-index: 10;
-      transition: opacity 0.2s, transform 0.2s;
+      font-size: 1.2rem; cursor: pointer; z-index: 10;
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+    .scroll-down-btn:active { transform: scale(0.92); }
 
     .scroll-down-btn .notification-dot {
-      position: absolute; top: 2px; right: 2px;
-      width: 10px; height: 10px; border-radius: 50%;
-      background: #4CAF50; border: 2px solid #FFFFFF;
+      position: absolute; top: 0px; right: 0px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #4CAF50; border: 2.5px solid #FFFFFF;
+      box-shadow: 0 0 6px rgba(76, 175, 80, 0.6);
     }
 
     .input-bar-container { padding: 12px 16px; background: #FFFFFF; border-top: 1px solid #EDF2F7; display: flex; flex-direction: column; gap: 8px; }
     .input-bar { display: flex; align-items: center; gap: 8px; }
-    .action-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: #EDF2F7; color: #4A5568; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-    .send-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, #090979 0%, #FF758C 100%); color: white; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .action-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: #EDF2F7; color: #4A5568; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.15s ease; }
+    .action-btn:active { transform: scale(0.92); }
+    
+    .send-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, #090979 0%, #FF758C 100%); color: white; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease; }
+    .send-btn:active { transform: scale(0.92); }
 
     .cards-container { display: flex; flex-direction: column; gap: 14px; padding-bottom: 60px; }
     .card-item-wrapper { display: flex; width: 100%; }
@@ -176,9 +217,16 @@
       <div id="section-chat" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
         <div class="app-content" id="chat-box-container" onscroll="handleScroll()">
           <div id="chat-box"></div>
+          
+          <!-- Bulle de Saisie en temps réel (Partenaire écrit...) -->
+          <div id="typing-indicator" class="typing-bubble hidden">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
         </div>
 
-        <!-- Bulle de défilement vers le bas -->
+        <!-- Bouton Défilement Bas -->
         <button id="scroll-down-btn" class="scroll-down-btn hidden" onclick="scrollToBottomManual()">
           ↓
           <div id="scroll-dot" class="notification-dot hidden"></div>
@@ -194,10 +242,10 @@
             <span style="cursor:pointer; color:#E53935; font-weight:bold;" onclick="cancelReply()">✕</span>
           </div>
 
-          <!-- Carte jointe -->
-          <div id="attachment-preview" class="hidden" style="background:#F7FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:8px 12px; font-size:0.82rem; display:flex; justify-content:space-between;">
-            <span>Carte jointe : <strong id="preview-card-title"></strong></span>
-            <span style="cursor:pointer; color:#E53935;" onclick="removeAttachment()">✕</span>
+          <!-- Carte jointe (Titre de la carte affiché) -->
+          <div id="attachment-preview" class="hidden" style="background:#F7FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:8px 12px; font-size:0.82rem; display:flex; justify-content:space-between; align-items:center;">
+            <span><strong id="preview-card-title" style="color:#090979;"></strong></span>
+            <span style="cursor:pointer; color:#E53935; font-weight:bold;" onclick="removeAttachment()">✕</span>
           </div>
 
           <div class="input-bar">
@@ -247,6 +295,7 @@
     let isPartnerOnline = false;
     let lastDateStr = '';
     let isUserScrolledUp = false;
+    let typingTimeout = null;
 
     function handleConvert() {
       const val = document.getElementById('b12-input').value.trim().toUpperCase();
@@ -304,12 +353,26 @@
       });
 
       socket.on('chat message', (msg) => {
+        hideTypingIndicator();
         appendSingleMessage(msg);
         
         if (isUserScrolledUp) {
           document.getElementById('scroll-dot').classList.remove('hidden');
         } else {
           scrollToBottom();
+        }
+      });
+
+      // Gestion de la saisie (Typing)
+      socket.on('typing', (data) => {
+        if (data.user === partnerUser || data.sender === partnerUser) {
+          showTypingIndicator();
+        }
+      });
+
+      socket.on('stop typing', (data) => {
+        if (data.user === partnerUser || data.sender === partnerUser) {
+          hideTypingIndicator();
         }
       });
     }
@@ -377,7 +440,6 @@
       box.appendChild(bubble);
     }
 
-    /* Swipe Moins Sensible (Seuil augmenté à 90px + Angle vérifié) */
     function attachSwipeToReply(element, sender, text) {
       let startX = 0;
       let startY = 0;
@@ -396,7 +458,6 @@
         const diffX = currentX - startX;
         const diffY = Math.abs(currentY - startY);
 
-        // Se déclenche uniquement si le geste est principalement horizontal
         if (diffX > 0 && diffX < 120 && diffY < 30) {
           element.style.transform = `translateX(${diffX * 0.6}px)`;
         }
@@ -427,7 +488,6 @@
       document.getElementById('reply-banner').classList.add('hidden');
     }
 
-    /* Gestion du Défilement et de la Bulle Flottante */
     function handleScroll() {
       const container = document.getElementById('chat-box-container');
       const scrollBtn = document.getElementById('scroll-down-btn');
@@ -467,6 +527,24 @@
     function onMessageInput() {
       const text = document.getElementById('chat-msg').value;
       document.getElementById('attach-btn').innerText = text.trim().length > 0 ? "📎" : "+";
+
+      // Émission d'événement typing
+      if (socket && socket.connected) {
+        socket.emit('typing', { sender: currentUser, user: currentUser });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          socket.emit('stop typing', { sender: currentUser, user: currentUser });
+        }, 2000);
+      }
+    }
+
+    function showTypingIndicator() {
+      document.getElementById('typing-indicator').classList.remove('hidden');
+      if (!isUserScrolledUp) scrollToBottom();
+    }
+
+    function hideTypingIndicator() {
+      document.getElementById('typing-indicator').classList.add('hidden');
     }
 
     function sendMsg() {
@@ -491,6 +569,8 @@
         message: encrypted,
         text: encrypted
       });
+
+      if (socket) socket.emit('stop typing', { sender: currentUser, user: currentUser });
 
       input.value = '';
       removeAttachment();
@@ -606,6 +686,3 @@
   </script>
 </body>
 </html>
-
-
-
