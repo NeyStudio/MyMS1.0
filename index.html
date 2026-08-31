@@ -13,8 +13,8 @@
       --bg-gradient: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 70%, #93F9B9 100%);
       --card-bg: rgba(255, 255, 255, 0.92);
       
-      /* Bleu Marine adouci pour Eric */
-      --eric-gradient: linear-gradient(135deg, #0D1B2A 0%, #1B263B 60%, #273B52 100%);
+      /* Vrai Bleu Marine dégradé pour Eric */
+      --eric-gradient: linear-gradient(135deg, #020024 0%, #090979 60%, #002147 100%);
       --olga-gradient: linear-gradient(135deg, #FF758C 0%, #FF7EB3 50%, #D81B60 100%);
       
       --text-dark: #2C3E50;
@@ -45,7 +45,7 @@
     }
 
     #public-app { padding: 32px 24px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
-    h1 { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; text-align: center; margin-bottom: 8px; color: #1E3C72; }
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: 2.2rem; text-align: center; margin-bottom: 8px; color: #090979; }
     .subtitle { text-align: center; color: var(--text-light); font-size: 0.9rem; margin-bottom: 24px; }
 
     input, textarea {
@@ -55,7 +55,7 @@
 
     button.btn-primary {
       width: 100%; padding: 14px; border: none; border-radius: 12px;
-      background: linear-gradient(135deg, #1E3C72 0%, #FF758C 100%); color: white;
+      background: linear-gradient(135deg, #090979 0%, #FF758C 100%); color: white;
       font-weight: 600; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 
@@ -72,14 +72,13 @@
 
     .nav-tabs { display: flex; gap: 6px; background: #EDF2F7; padding: 4px; border-radius: 14px; }
     .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; background: transparent; color: var(--text-light); font-weight: 600; font-size: 0.85rem; cursor: pointer; }
-    .tab-btn.active { background: #FFF; color: #1E3C72; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .tab-btn.active { background: #FFF; color: #090979; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
 
-    .app-content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; }
+    .app-content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; position: relative; }
     .date-separator { align-self: center; background: #E2E8F0; color: #4A5568; font-size: 0.72rem; font-weight: 600; padding: 4px 12px; border-radius: 12px; margin: 12px 0; text-transform: uppercase; letter-spacing: 0.5px; }
 
     #chat-box { display: flex; flex-direction: column; gap: 10px; }
 
-    /* Bulles & Animation Swipe */
     .msg-bubble {
       max-width: 80%; padding: 8px 12px; border-radius: 16px; font-size: 0.9rem;
       line-height: 1.35; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.06); word-break: break-word; color: white;
@@ -92,7 +91,6 @@
     .msg-bubble.sender-eric { background: var(--eric-gradient); }
     .msg-bubble.sender-olga { background: var(--olga-gradient); }
 
-    /* Citation / Reply Preview */
     .reply-preview-box {
       background: rgba(255, 255, 255, 0.2); border-left: 3px solid #FFF;
       padding: 4px 8px; border-radius: 6px; margin-bottom: 6px; font-size: 0.78rem; opacity: 0.9;
@@ -104,21 +102,38 @@
     }
     .ticks { font-size: 0.72rem; letter-spacing: -2px; color: rgba(255, 255, 255, 0.85); margin-left: 2px; }
 
+    /* Bouton Flottant Défilement Bas */
+    .scroll-down-btn {
+      position: absolute; bottom: 80px; right: 20px;
+      width: 40px; height: 40px; border-radius: 50%;
+      background: #FFFFFF; color: #090979; border: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; cursor: pointer; z-index: 10;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .scroll-down-btn .notification-dot {
+      position: absolute; top: 2px; right: 2px;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #4CAF50; border: 2px solid #FFFFFF;
+    }
+
     .input-bar-container { padding: 12px 16px; background: #FFFFFF; border-top: 1px solid #EDF2F7; display: flex; flex-direction: column; gap: 8px; }
     .input-bar { display: flex; align-items: center; gap: 8px; }
     .action-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: #EDF2F7; color: #4A5568; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-    .send-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, #1E3C72 0%, #FF758C 100%); color: white; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .send-btn { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, #090979 0%, #FF758C 100%); color: white; font-size: 1.1rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
     .cards-container { display: flex; flex-direction: column; gap: 14px; padding-bottom: 60px; }
     .card-item-wrapper { display: flex; width: 100%; }
     .card-item-wrapper.sent { justify-content: flex-end; }
     .card-item-wrapper.received { justify-content: flex-start; }
     .card-item { max-width: 85%; background: #FFF; border-radius: 16px; padding: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1.5px solid #E2E8F0; }
-    .card-item-wrapper.sent .card-item { border-color: #2A5298; }
+    .card-item-wrapper.sent .card-item { border-color: #090979; }
     .card-item-wrapper.received .card-item { border-color: #FF758C; }
     .card-item.redeemed { opacity: 0.6; background: #F7FAFC; border-style: dashed; }
     
-    .floating-add-btn { position: absolute; bottom: 20px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #FF758C 0%, #1E3C72 100%); color: white; font-size: 1.5rem; border: none; box-shadow: 0 6px 16px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .floating-add-btn { position: absolute; bottom: 20px; right: 20px; width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #FF758C 0%, #090979 100%); color: white; font-size: 1.5rem; border: none; box-shadow: 0 6px 16px rgba(0,0,0,0.25); cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .modal-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 100; }
     .modal-card { background: white; border-radius: 20px; padding: 24px; width: 100%; max-width: 360px; }
   </style>
@@ -158,22 +173,28 @@
       </div>
 
       <!-- Messagerie -->
-      <div id="section-chat" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-        <div class="app-content" id="chat-box-container">
+      <div id="section-chat" style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative;">
+        <div class="app-content" id="chat-box-container" onscroll="handleScroll()">
           <div id="chat-box"></div>
         </div>
 
+        <!-- Bulle de défilement vers le bas -->
+        <button id="scroll-down-btn" class="scroll-down-btn hidden" onclick="scrollToBottomManual()">
+          ↓
+          <div id="scroll-dot" class="notification-dot hidden"></div>
+        </button>
+
         <div class="input-bar-container">
-          <!-- Zone d'affichage de réponse (Swipe) -->
-          <div id="reply-banner" class="hidden" style="background:#EDF2F7; border-left:4px solid #1E3C72; border-radius:8px; padding:6px 12px; font-size:0.8rem; display:flex; justify-content:space-between; align-items:center;">
+          <!-- Zone de réponse -->
+          <div id="reply-banner" class="hidden" style="background:#EDF2F7; border-left:4px solid #090979; border-radius:8px; padding:6px 12px; font-size:0.8rem; display:flex; justify-content:space-between; align-items:center;">
             <div>
-              <span style="font-weight:700; color:#1E3C72;" id="reply-banner-user">Réponse</span>
+              <span style="font-weight:700; color:#090979;" id="reply-banner-user">Réponse</span>
               <div id="reply-banner-text" style="color:#4A5568; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px;"></div>
             </div>
             <span style="cursor:pointer; color:#E53935; font-weight:bold;" onclick="cancelReply()">✕</span>
           </div>
 
-          <!-- Zone d'affichage de carte jointe -->
+          <!-- Carte jointe -->
           <div id="attachment-preview" class="hidden" style="background:#F7FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:8px 12px; font-size:0.82rem; display:flex; justify-content:space-between;">
             <span>Carte jointe : <strong id="preview-card-title"></strong></span>
             <span style="cursor:pointer; color:#E53935;" onclick="removeAttachment()">✕</span>
@@ -225,6 +246,7 @@
     let localCards = [];
     let isPartnerOnline = false;
     let lastDateStr = '';
+    let isUserScrolledUp = false;
 
     function handleConvert() {
       const val = document.getElementById('b12-input').value.trim().toUpperCase();
@@ -278,12 +300,17 @@
         box.innerHTML = '';
         lastDateStr = '';
         messages.forEach(m => appendSingleMessage(m));
-        scrollToBottom();
+        if (!isUserScrolledUp) scrollToBottom();
       });
 
       socket.on('chat message', (msg) => {
         appendSingleMessage(msg);
-        scrollToBottom();
+        
+        if (isUserScrolledUp) {
+          document.getElementById('scroll-dot').classList.remove('hidden');
+        } else {
+          scrollToBottom();
+        }
       });
     }
 
@@ -321,7 +348,6 @@
       
       const timeFormatted = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
-      // Extraction d'une éventuelle réponse (Quote)
       let replyHTML = '';
       if (textToShow.includes('┌─ [')) {
         const parts = textToShow.split('\n└─ ');
@@ -332,7 +358,6 @@
         }
       }
 
-      // Gestion dynamique des 2 traits (✓✓)
       let ticksHTML = '';
       if (isMine) {
         const tickSymbol = isPartnerOnline ? '✓✓' : '✓';
@@ -348,36 +373,44 @@
         </div>
       `;
 
-      // Event Swipe-to-reply (Glisser vers la droite)
       attachSwipeToReply(bubble, senderName, textToShow);
-
       box.appendChild(bubble);
     }
 
-    /* Logique Swipe to Reply */
+    /* Swipe Moins Sensible (Seuil augmenté à 90px + Angle vérifié) */
     function attachSwipeToReply(element, sender, text) {
       let startX = 0;
+      let startY = 0;
       let currentX = 0;
+      let currentY = 0;
 
       element.addEventListener('touchstart', (e) => {
         startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
       }, { passive: true });
 
       element.addEventListener('touchmove', (e) => {
         currentX = e.touches[0].clientX;
+        currentY = e.touches[0].clientY;
+        
         const diffX = currentX - startX;
-        if (diffX > 0 && diffX < 80) {
-          element.style.transform = `translateX(${diffX}px)`;
+        const diffY = Math.abs(currentY - startY);
+
+        // Se déclenche uniquement si le geste est principalement horizontal
+        if (diffX > 0 && diffX < 120 && diffY < 30) {
+          element.style.transform = `translateX(${diffX * 0.6}px)`;
         }
       }, { passive: true });
 
       element.addEventListener('touchend', () => {
         const diffX = currentX - startX;
+        const diffY = Math.abs(currentY - startY);
         element.style.transform = 'translateX(0px)';
-        if (diffX > 50) {
+
+        if (diffX > 90 && diffY < 40) {
           setReplyToMessage(sender, text);
         }
-        startX = 0; currentX = 0;
+        startX = 0; currentX = 0; startY = 0; currentY = 0;
       });
     }
 
@@ -394,9 +427,31 @@
       document.getElementById('reply-banner').classList.add('hidden');
     }
 
+    /* Gestion du Défilement et de la Bulle Flottante */
+    function handleScroll() {
+      const container = document.getElementById('chat-box-container');
+      const scrollBtn = document.getElementById('scroll-down-btn');
+      
+      const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+      
+      if (distanceToBottom > 120) {
+        isUserScrolledUp = true;
+        scrollBtn.classList.remove('hidden');
+      } else {
+        isUserScrolledUp = false;
+        scrollBtn.classList.add('hidden');
+        document.getElementById('scroll-dot').classList.add('hidden');
+      }
+    }
+
     function scrollToBottom() {
       const container = document.getElementById('chat-box-container');
       container.scrollTop = container.scrollHeight;
+    }
+
+    function scrollToBottomManual() {
+      scrollToBottom();
+      document.getElementById('scroll-dot').classList.add('hidden');
     }
 
     function formatDateSeparator(date) {
@@ -551,5 +606,6 @@
   </script>
 </body>
 </html>
+
 
 
